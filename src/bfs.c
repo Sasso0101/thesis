@@ -150,9 +150,7 @@ int main(int argc, char **argv) {
       {'s', "source", "ID of source vertex", ARG_TYPE_INT, &args.source_id,
        false},
       {'c', "check", "Checks BFS correctness", ARG_TYPE_BOOL, &args.check,
-       false},
-      {'o', "output", "Store benchmark results in csv file", ARG_TYPE_BOOL,
-       &args.output, false}};
+       false}};
   int num_options = sizeof(options) / sizeof(options[0]);
   const char *app_description =
       "An optimized BFS algorithm for large-diameter graphs.";
