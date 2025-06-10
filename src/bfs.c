@@ -1,5 +1,7 @@
+#include <string.h>
 #define _GNU_SOURCE
-#include "command_line.h"
+#include "cli_parser.h"
+#include "benchmark.h"
 #include "config.h"
 #include "debug_utils.h"
 #include "frontier.h"
@@ -125,11 +127,41 @@ uint32_t *generate_sources(const GraphCSR *graph, int runs,
   return sources;
 }
 
+typedef struct {
+  char *filename; // Will be allocated by the parser
+  int runs;
+  int source_id;
+  bool check;
+  bool output;
+} AppArgs;
+
 int main(int argc, char **argv) {
-  Cli_Args args;
-  init_cli();
-  if (parse_args(argc, argv, &args) != 0) {
-    return -1;
+  AppArgs args = {.filename = NULL,
+                  .runs = 1,
+                  .source_id = -1,
+                  .check = false,
+                  .output = true};
+  const CliOption options[] = {
+      {'f', "file", "Load graph from file", ARG_TYPE_STRING, &args.filename,
+       true},
+      {'n', "runs", "Number of runs", ARG_TYPE_INT, &args.runs, false},
+      {'s', "source", "ID of source vertex", ARG_TYPE_INT, &args.source_id,
+       false},
+      {'c', "check", "Checks BFS correctness", ARG_TYPE_BOOL, &args.check,
+       false},
+      {'o', "output", "Store benchmark results in csv file", ARG_TYPE_BOOL,
+       &args.output, false}};
+  int num_options = sizeof(options) / sizeof(options[0]);
+  const char *app_description =
+      "An optimized BFS algorithm for large-diameter graphs.";
+  int parse_result =
+      cli_parse(argc, argv, options, num_options, app_description);
+
+  // Check the result: 0 is success, 1 means help was printed, -1 is an error.
+  if (parse_result != 0) {
+    if (args.filename)
+      free(args.filename);
+    return (parse_result == 1) ? 0 : 1;
   }
 
   GraphCSR *graph = import_mtx(args.filename, METADATA_SIZE, VERT_MAX);
@@ -139,25 +171,19 @@ int main(int argc, char **argv) {
   }
 
   uint32_t *sources =
-      generate_sources(graph, args.runs, graph->num_vertices, args.source);
-  // print_sources(graph, sources, args.runs);
-  printf("Threads: %d, Chunk size: %d, Vertex size: %lu bytes\n", MAX_THREADS,
-         CHUNK_SIZE, sizeof(mer_t));
+      generate_sources(graph, args.runs, graph->num_vertices, args.source_id);
 
   distances = malloc(graph->num_vertices * sizeof(uint32_t));
   memset(distances, UINT32_MAX, graph->num_vertices * sizeof(uint32_t));
   initialize_bfs(graph);
 
-  struct timespec start, end;
-  double elapsed[args.runs];
+  static char param_buffer[256];
+
   for (int i = 0; i < args.runs; i++) {
-    clock_gettime(CLOCK_MONOTONIC, &start);
+    snprintf(param_buffer, sizeof(param_buffer), "dataset=%s,threads=%d,chunk_size=%d", args.filename, MAX_THREADS, CHUNK_SIZE);
+    BENCHMARK_START("BFS", i, param_buffer);
     bfs(sources[i]);
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    long seconds = end.tv_sec - start.tv_sec;
-    long nanoseconds = end.tv_nsec - start.tv_nsec;
-    elapsed[i] = seconds + nanoseconds * 1e-9;
-    printf("Trial time: %16.5f\n", elapsed[i]);
+    BENCHMARK_END();
     if (args.check) {
       check_bfs_correctness(graph, distances, sources[i]);
     }
@@ -165,8 +191,6 @@ int main(int argc, char **argv) {
   }
   // Terminate threads
   thread_pool_terminate(&tp);
-
-  print_time(elapsed, args.runs);
 
   free(sources);
   free(graph->row_ptr);
