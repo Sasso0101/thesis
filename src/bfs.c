@@ -25,6 +25,8 @@ atomic_int active_threads;
 volatile uint32_t exploration_done;
 volatile int distance;
 
+thread_pool_t tp;
+
 void top_down(MergedCSR *merged_csr, Frontier *current_frontier,
               Frontier *next_frontier, int distance, int thread_id) {
   mer_t v;

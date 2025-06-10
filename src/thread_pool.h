@@ -33,7 +33,7 @@ typedef struct {
   void *(*routine)(void *); // Store the worker function pointer
 } thread_pool_t;
 
-thread_pool_t tp;
+extern thread_pool_t tp;
 
 /**
  * @brief Initializes a thread pool structure.
@@ -61,7 +61,7 @@ void init_thread_pool(thread_pool_t *tp, void *(*routine)(void *));
  *         (to either work or exit cleanly based on `stop_threads`).
  *         Calls pthread_exit directly if termination is signaled.
  */
-int wait_for_work(thread_pool_t *tp, uint *run_id);
+int wait_for_work(thread_pool_t *tp, uint32_t *run_id);
 
 /**
  * @brief Creates and launches the worker threads in the pool.
