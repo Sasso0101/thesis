@@ -1,0 +1,4 @@
+*.txt
+datasets/*
+obj/
+bin/
