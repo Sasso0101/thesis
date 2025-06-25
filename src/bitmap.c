@@ -1,6 +1,7 @@
 #include "bitmap.h"
 #include "config.h"
 #include "frontier.h"
+#include <stdlib.h>
 
 Bitmap *bitmap_init(uint32_t num_vertices) {
   Bitmap *b = malloc(sizeof(Bitmap));

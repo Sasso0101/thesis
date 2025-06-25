@@ -2,7 +2,7 @@
 #define MERGEDCSR_H
 
 #include "config.h"
-#include "graph.h"
+#include "mmio_c_wrapper.h"
 
 typedef struct {
   uint32_t num_vertices;
@@ -25,7 +25,7 @@ typedef struct {
  * distance and neighbor information are stored contiguously, improving 
  * cache performance.
  */
-MergedCSR *to_merged_csr(const GraphCSR *graph); 
+MergedCSR *to_merged_csr(const mmio_csr_u32_f32_t *graph); 
 
 void destroy_merged_csr(MergedCSR *merged_csr); 
 

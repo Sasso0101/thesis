@@ -1,35 +1,64 @@
 # Compiler and flags
 CC = gcc
-CFLAGS = -Wall -Wextra -O3 -std=c11 -MMD -MP -pthread
+CFLAGS = -Wall -Wextra -O3 -std=c11 -MMD -MP
 
-# Directories
+# --- Library Configuration ---
+# Set the path to the root of the distributed_mmio library.
+DIST_MMIO_PATH = MtxMan/distributed_mmio
+# CPPFLAGS: Pre-processor flags, primarily for include paths (-I).
+CPPFLAGS = -I$(DIST_MMIO_PATH)/include
+# LDFLAGS: Linker flags, primarily for library search paths (-L).
+LDFLAGS = -L$(DIST_MMIO_PATH)/build
+
+# LDLIBS: The libraries to link against.
+# -ldistributed_mmio: The name of our C++ library (libdistributed_mmio.a).
+# -lstdc++:           This links the C++ standard library.
+# -pthread:           Used in bfs.
+LDLIBS = -ldistributed_mmio -lstdc++ -pthread
+
+
+# --- Project Directories ---
 SRC_DIR = src
 OBJ_DIR = obj
 BIN_DIR = bin
 
-# Source files and object files
+# --- Source, Object, and Dependency Files ---
 SRCS = $(wildcard $(SRC_DIR)/*.c)
 OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 DEPS = $(OBJS:.o=.d)
 
-# Target executable
+# The final executable target.
 TARGET = $(BIN_DIR)/bfs
+
+# Explicitly define the full path to the static library we depend on.
+LIB_STATIC_FULL_PATH = $(DIST_MMIO_PATH)/build/libdistributed_mmio.a
 
 # Rules
 all: $(TARGET)
 
-$(TARGET): $(OBJS)
-	mkdir -p $(BIN_DIR)
-	$(CC) $(CFLAGS) -o $@ $^
 
+# Rule to link the final executable.
+# It depends on all object files AND the static library itself.
+$(TARGET): $(OBJS) $(LIB_STATIC_FULL_PATH)
+	@echo "==> Linking objects with the distributed_mmio library..."
+	@mkdir -p $(BIN_DIR)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS)
+	@echo "==> Build successful: $(TARGET)"
+
+# Pattern rule to compile a .c file into a .o file.
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+	@echo "==> Compiling: $<"
+	@mkdir -p $(OBJ_DIR)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 # Include auto-generated dependency files if they exist
 -include $(DEPS)
 
+# Rule to clean up all generated files.
+.PHONY: clean
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR)
+	@echo "==> Cleaning up build artifacts..."
+	@rm -rf $(OBJ_DIR) $(BIN_DIR)
+	@echo "==> Cleanup complete."
 
 .PHONY: all clean

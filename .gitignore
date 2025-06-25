@@ -3,3 +3,6 @@ datasets/*
 obj/
 bin/
 .venv
+.cache/
+*.csv
+compile_commands.json

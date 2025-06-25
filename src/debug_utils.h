@@ -4,7 +4,9 @@
 #include "config.h"
 #include "frontier.h"
 #include "merged_csr.h"
+#include "mmio_c_wrapper.h"
 #include <stdint.h>
+#include <stdio.h>
 
 void print_chunk_counts(const Frontier *f) {
   printf("Chunk counts: ");
@@ -14,7 +16,7 @@ void print_chunk_counts(const Frontier *f) {
   printf("\n");
 }
 
-void print_sources(const GraphCSR *graph, const uint32_t *sources, int runs) {
+void print_sources(const mmio_csr_u32_f32_t *graph, const uint32_t *sources, int runs) {
   printf("Sources: ");
   for (int i = 0; i < runs; i++) {
     printf("%u (%u)\n", sources[i], graph->row_ptr[sources[i]]);
@@ -22,8 +24,8 @@ void print_sources(const GraphCSR *graph, const uint32_t *sources, int runs) {
   printf("\n");
 }
 
-void print_graph(const GraphCSR *graph) {
-  for (uint32_t i = 0; i < graph->num_vertices; i++) {
+void print_graph(const mmio_csr_u32_f32_t *graph) {
+  for (uint32_t i = 0; i < graph->nrows; i++) {
     printf("Vertex %u: ", i);
     for (uint32_t j = graph->row_ptr[i]; j < graph->row_ptr[i + 1]; j++) {
       printf("%u ", graph->col_idx[j]);
@@ -43,9 +45,9 @@ void print_merged_csr(const MergedCSR *merged_csr) {
   }
 }
 
-void print_distances(const GraphCSR *graph, const uint32_t *distances) {
+void print_distances(const mmio_csr_u32_f32_t *graph, const uint32_t *distances) {
   printf("Distances:\n");
-  for (uint32_t i = 0; i < graph->num_vertices; i++) {
+  for (uint32_t i = 0; i < graph->nrows; i++) {
     printf("Vertex %u: %u\n", i, distances[i]);
   }
 }
@@ -58,9 +60,9 @@ void print_time(const double elapsed[], int runs) {
   printf("Average time: %14.5f\n", total / runs);
 }
 
-int check_bfs_correctness(const GraphCSR *graph, const uint32_t *distances,
+int check_bfs_correctness(const mmio_csr_u32_f32_t *graph, const uint32_t *distances,
                           uint32_t source) {
-  uint32_t n = graph->num_vertices;
+  uint32_t n = graph->nrows;
 
   // Basic sanity check for source index
   if (source >= n) {

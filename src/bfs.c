@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string.h>
 #define _GNU_SOURCE
 #include "cli_parser.h"
@@ -5,10 +6,10 @@
 #include "config.h"
 #include "debug_utils.h"
 #include "frontier.h"
-#include "graph.h"
 #include "merged_csr.h"
 #include "mt19937-64.h"
 #include "thread_pool.h"
+#include "mmio_c_wrapper.h"
 #include <assert.h>
 #include <pthread.h>
 #include <stdatomic.h>
@@ -89,7 +90,7 @@ void *thread_main(void *arg) {
   return NULL;
 }
 
-void initialize_bfs(const GraphCSR *graph) {
+void initialize_bfs(const mmio_csr_u32_f32_t *graph) {
   merged_csr = to_merged_csr(graph);
   f1 = frontier_create();
   f2 = frontier_create();
@@ -109,7 +110,7 @@ void bfs(uint32_t source) {
   thread_pool_start_wait(&tp);
 }
 
-uint32_t *generate_sources(const GraphCSR *graph, int runs,
+uint32_t *generate_sources(const mmio_csr_u32_f32_t *graph, int runs,
                            uint32_t num_vertices, uint32_t source) {
   uint32_t *sources = malloc(runs * sizeof(uint32_t));
   if (source != UINT32_MAX) {
@@ -164,17 +165,18 @@ int main(int argc, char **argv) {
     return (parse_result == 1) ? 0 : 1;
   }
 
-  GraphCSR *graph = import_mtx(args.filename, METADATA_SIZE, VERT_MAX);
+  // GraphCSR *graph = import_mtx(args.filename, METADATA_SIZE, VERT_MAX);
+  mmio_csr_u32_f32_t *graph = mmio_read_csr_u32_f32(args.filename, false);
   if (graph == NULL) {
     printf("Failed to import graph from file [%s]\n", args.filename);
     return -1;
   }
 
   uint32_t *sources =
-      generate_sources(graph, args.runs, graph->num_vertices, args.source_id);
+      generate_sources(graph, args.runs, graph->nrows, args.source_id);
 
-  distances = malloc(graph->num_vertices * sizeof(uint32_t));
-  memset(distances, UINT32_MAX, graph->num_vertices * sizeof(uint32_t));
+  distances = malloc(graph->nrows * sizeof(uint32_t));
+  memset(distances, UINT32_MAX, graph->nrows * sizeof(uint32_t));
   initialize_bfs(graph);
 
   static char param_buffer[256];

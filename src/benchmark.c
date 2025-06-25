@@ -1,5 +1,6 @@
 // benchmark.c
 
+#define _POSIX_C_SOURCE 199309L
 #include "benchmark.h"
 #include <stdio.h>
 #include <stdlib.h>
