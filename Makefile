@@ -5,6 +5,8 @@ CFLAGS = -Wall -Wextra -O3 -std=c11 -MMD -MP
 # --- Library Configuration ---
 # Set the path to the root of the distributed_mmio library.
 DIST_MMIO_PATH = MtxMan/distributed_mmio
+LIB_STATIC_FULL_PATH = $(DIST_MMIO_PATH)/build/libdistributed_mmio.a
+
 # CPPFLAGS: Pre-processor flags, primarily for include paths (-I).
 CPPFLAGS = -I$(DIST_MMIO_PATH)/include
 # LDFLAGS: Linker flags, primarily for library search paths (-L).
@@ -15,6 +17,7 @@ LDFLAGS = -L$(DIST_MMIO_PATH)/build
 # -lstdc++:           This links the C++ standard library.
 # -pthread:           Used in bfs.
 LDLIBS = -ldistributed_mmio -lstdc++ -pthread
+
 
 
 # --- Project Directories ---
@@ -36,13 +39,18 @@ LIB_STATIC_FULL_PATH = $(DIST_MMIO_PATH)/build/libdistributed_mmio.a
 # Rules
 all: $(TARGET)
 
+$(LIB_STATIC_FULL_PATH):
+	@echo "==> Configuring and building distributed_mmio library..."
+	@mkdir -p $(DIST_MMIO_PATH)/build
+	@cd $(DIST_MMIO_PATH)/build && cmake ..
+	@$(MAKE) -C $(DIST_MMIO_PATH)/build
 
 # Rule to link the final executable.
 # It depends on all object files AND the static library itself.
 $(TARGET): $(OBJS) $(LIB_STATIC_FULL_PATH)
 	@echo "==> Linking objects with the distributed_mmio library..."
 	@mkdir -p $(BIN_DIR)
-	$(CC) -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS)
+	$(CXX) -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS)
 	@echo "==> Build successful: $(TARGET)"
 
 # Pattern rule to compile a .c file into a .o file.
@@ -59,6 +67,8 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 clean:
 	@echo "==> Cleaning up build artifacts..."
 	@rm -rf $(OBJ_DIR) $(BIN_DIR)
+	@echo "==> Cleaning up distributed_mmio library..."
+	@rm -rf $(DIST_MMIO_PATH)/build
 	@echo "==> Cleanup complete."
 
 .PHONY: all clean

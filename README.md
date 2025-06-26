@@ -3,11 +3,18 @@
 Optimized BFS implementation in C using pthreads.
 
 ## Prerequisites
-A Linux system with the following packages installed:
+A Linux system with the following software installed:
+- git
 - gcc with support for C11
+- cmake
 - make
 
 ## Installation
+
+Install the submodules required for the project:
+```bash
+git submodule update --init --recursive
+```
 
 Run make in the root directory to build the project:
   ```bash
