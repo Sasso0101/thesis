@@ -1,5 +1,5 @@
 # Compiler and flags
-CC = gcc
+CC ?= gcc
 CFLAGS = -Wall -Wextra -O3 -std=c11 -MMD -MP
 
 # --- Library Configuration ---
@@ -18,8 +18,6 @@ LDFLAGS = -L$(DIST_MMIO_PATH)/build
 # -pthread:           Used in bfs.
 LDLIBS = -ldistributed_mmio -lstdc++ -pthread
 
-
-
 # --- Project Directories ---
 SRC_DIR = src
 OBJ_DIR = obj
@@ -35,6 +33,9 @@ TARGET = $(BIN_DIR)/bfs
 
 # Explicitly define the full path to the static library we depend on.
 LIB_STATIC_FULL_PATH = $(DIST_MMIO_PATH)/build/libdistributed_mmio.a
+
+# Print the GCC version
+$(info GCC version: $(shell gcc -dumpversion))
 
 # Rules
 all: $(TARGET)

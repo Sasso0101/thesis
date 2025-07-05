@@ -36,6 +36,7 @@ static void write_to_csv(const char *exp_name, int run_id, const char *params,
 
   // Write the data row. We quote the string fields to handle commas safely.
   fprintf(f, "\"%s\",%d,\"%s\",%.4f\n", exp_name, run_id, params, duration);
+  printf("\"%s\",%d,\"%s\",%.4f\n", exp_name, run_id, params, duration);
 
   fclose(f);
 }

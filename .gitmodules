@@ -1,6 +1,7 @@
 [submodule "SbatchMan"]
 	path = SbatchMan
 	url = https://github.com/LorenzoPichetti/SbatchMan.git
+	branch = rewrite
 [submodule "MtxMan"]
 	path = MtxMan
 	url = https://github.com/ThomasPasquali/MtxMan.git

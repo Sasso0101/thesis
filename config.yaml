@@ -1,0 +1,11 @@
+# This is the base folder for storing the Matrix Market files
+path: ../datasets
+
+# This is an example subfolder/category of matrices
+large_diameter:
+  # List of matrices to be downloaded from SuiteSparse
+  # Format: "<group>/<matrix_name>"
+  suite_sparse_matrix_list:
+    - GAP/GAP-road
+    - DIMACS10/europe_osm
+    - Pajek/Stranke94
