@@ -1,90 +1,182 @@
 #ifndef FRONTIER_H
 #define FRONTIER_H
 
-/**
- * @brief Thread-local vertex chunk pool for parallel graph traversal.
- *
- * The Frontier data structure manages per-thread pools of reusable vertex
- * chunks for use in parallel graph algorithms. Each thread maintains its own
- * chunk pool to minimize contention and improve cache locality.
- *
- * ## Design Overview
- * - The Frontier is composed of MAX_THREADS thread-local chunk pools.
- * - Each pool (`ChunkPool`) contains a dynamically resizable array of
- *   pointers to `VertexChunk` blocks.
- * - A `VertexChunk` holds a fixed-size array of vertices (CHUNK_SIZE) and acts
- *   as a LIFO (stack-style) buffer.
- * - Threads acquire and release chunks from their own pool in a lock-protected
- * manner.
- * - Chunks are not freed when released — they are reused, minimizing dynamic
- * allocations.
- *
- * ## Concurrency Model
- * - Chunk acquisition and release are thread-safe for individual threads (each
- * thread locks only its own pool).
- * - No synchronization is required for accessing the internal content of a
- * `VertexChunk` if it is used exclusively by one thread.
- * - Cross-thread stealing is supported via inspection functions.
- */
-
 #include "config.h"
-#include <pthread.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdatomic.h>
+#include <sched.h>
+#include <numa.h>
 
+// CNA Lock Implementation (embedded directly in frontier.h)
+typedef struct cna_node {
+    _Atomic(uintptr_t) spin;
+    _Atomic(int) socket;
+    _Atomic(struct cna_node *) secTail;
+    _Atomic(struct cna_node *) next;
+} cna_node_t;
+
+typedef struct {
+    _Atomic(cna_node_t *) tail;
+} cna_lock_t;
+
+static __thread uint32_t cur_thread_id = 0;
+
+static void init_thread_id() {
+    if (cur_thread_id == 0) {
+        cur_thread_id = 1;
+    }
+}
+
+static int current_numa_node() {
+    int core = sched_getcpu();
+    int numa_node = numa_node_of_cpu(core);
+    return numa_node;
+}
+
+#define THRESHOLD (0xffff)
+#define UNLOCK_COUNT_THRESHOLD 1024
+
+static inline uint32_t xor_random() {
+    static __thread uint32_t rv = 0;
+    if (rv == 0) rv = cur_thread_id + 1;
+    uint32_t v = rv;
+    v ^= v << 6;
+    v ^= (uint32_t)(v) >> 21;
+    v ^= v << 7;
+    rv = v;
+    return v & (UNLOCK_COUNT_THRESHOLD - 1);
+}
+
+static inline _Bool keep_lock_local() {
+    return xor_random() & THRESHOLD;
+}
+
+static inline cna_node_t* find_successor(cna_node_t *me) {
+    cna_node_t *next = atomic_load_explicit(&me->next, memory_order_relaxed);
+    int mySocket = atomic_load_explicit(&me->socket, memory_order_relaxed);
+    if (mySocket == -1) mySocket = current_numa_node();
+    if (next && atomic_load_explicit(&next->socket, memory_order_relaxed) == mySocket) {
+        return next;
+    }
+
+    cna_node_t *secHead = next;
+    cna_node_t *secTail = next;
+    if (!next) return NULL;
+
+    cna_node_t *cur = atomic_load_explicit(&next->next, memory_order_acquire);
+    while (cur) {
+        if (atomic_load_explicit(&cur->socket, memory_order_relaxed) == mySocket) {
+            if (atomic_load_explicit(&me->spin, memory_order_relaxed) > 1) {
+                cna_node_t *_spin = (cna_node_t*)atomic_load_explicit(&me->spin, memory_order_relaxed);
+                cna_node_t *_secTail = atomic_load_explicit(&_spin->secTail, memory_order_relaxed);
+                atomic_store_explicit(&_secTail->next, secHead, memory_order_relaxed);
+            } else {
+                atomic_store_explicit(&me->spin, (uintptr_t)secHead, memory_order_relaxed);
+            }
+            atomic_store_explicit(&secTail->next, NULL, memory_order_relaxed);
+            cna_node_t *_spin = (cna_node_t*)atomic_load_explicit(&me->spin, memory_order_relaxed);
+            atomic_store_explicit(&_spin->secTail, secTail, memory_order_relaxed);
+            return cur;
+        }
+        secTail = cur;
+        cur = atomic_load_explicit(&cur->next, memory_order_acquire);
+    }
+    return NULL;
+}
+
+static inline void cna_lock(cna_lock_t *lock, cna_node_t *me) {
+    atomic_store_explicit(&me->next, NULL, memory_order_relaxed);
+    atomic_store_explicit(&me->socket, -1, memory_order_relaxed);
+    atomic_store_explicit(&me->spin, 0, memory_order_relaxed);
+
+    cna_node_t *tail = atomic_exchange_explicit(&lock->tail, me, memory_order_seq_cst);
+
+    if (!tail) {
+        atomic_store_explicit(&me->spin, 1, memory_order_relaxed);
+        return;
+    }
+
+    atomic_store_explicit(&me->socket, current_numa_node(), memory_order_relaxed);
+    atomic_store_explicit(&tail->next, me, memory_order_release);
+
+    while (!atomic_load_explicit(&me->spin, memory_order_acquire)) {
+        asm volatile("nop");
+    }
+}
+
+static inline void cna_unlock(cna_lock_t *lock, cna_node_t *me) {
+    cna_node_t *next = atomic_load_explicit(&me->next, memory_order_acquire);
+
+    if (!next) {
+        uintptr_t spin = atomic_load_explicit(&me->spin, memory_order_relaxed);
+        if (spin == 1) {
+            cna_node_t *expected = me;
+            if (atomic_compare_exchange_strong_explicit(&lock->tail, &expected, NULL,
+                    memory_order_seq_cst, memory_order_relaxed)) {
+                return;
+            }
+        } else {
+            cna_node_t *secHead = (cna_node_t*)spin;
+            cna_node_t *expected = me;
+            if (atomic_compare_exchange_strong_explicit(&lock->tail, &expected,
+                    atomic_load_explicit(&secHead->secTail, memory_order_relaxed),
+                    memory_order_seq_cst, memory_order_relaxed)) {
+                atomic_store_explicit(&secHead->spin, 1, memory_order_release);
+                return;
+            }
+        }
+
+        while (!(next = atomic_load_explicit(&me->next, memory_order_acquire))) {
+        
+	        __asm__ __volatile__("pause");}
+    }
+
+    cna_node_t *succ = NULL;
+    if (keep_lock_local() && (succ = find_successor(me))) {
+        atomic_store_explicit(&succ->spin, 
+            atomic_load_explicit(&me->spin, memory_order_relaxed),
+            memory_order_release);
+    } else if (atomic_load_explicit(&me->spin, memory_order_relaxed) > 1) {
+        succ = (cna_node_t*)atomic_load_explicit(&me->spin, memory_order_relaxed);
+        cna_node_t *secTail = atomic_load_explicit(&succ->secTail, memory_order_relaxed);
+        atomic_store_explicit(&secTail->next, next, memory_order_relaxed);
+        atomic_store_explicit(&succ->spin, 1, memory_order_release);
+    } else {
+        atomic_store_explicit(&next->spin, 1, memory_order_release);
+    }
+}
+
+// Frontier implementation
 typedef mer_t ver_t;
 
 typedef struct {
-  ver_t vertices[CHUNK_SIZE];
-  int next_free_index;
+    ver_t vertices[CHUNK_SIZE];
+    int next_free_index;
 } Chunk;
 
 typedef struct {
-  Chunk **chunks;
-  int chunks_size;
-  int initialized_count;
-  int top_chunk;
-  int next_stealable_thread;
-  Chunk *scratch_chunk; // Scratch chunk used when adding or removing chunks
-  pthread_mutex_t lock;
+    Chunk **chunks;
+    int chunks_size;
+    int initialized_count;
+    int top_chunk;
+    int next_stealable_thread;
+    Chunk *scratch_chunk;
+    cna_lock_t lock;
+    cna_node_t node;
 } ThreadChunks;
 
 typedef struct {
-  ThreadChunks **thread_chunks;
-  int *chunk_counts;
+    ThreadChunks **thread_chunks;
+    int *chunk_counts;
 } Frontier;
 
-/**
- * Creates and initializes a new Frontier structure. Allocates memory for
- * per-thread vertex chunk pools and sets up mutexes for thread-safe chunk
- * acquisition and release.
- */
 Frontier *frontier_create();
-
-/**
- * Destroys a Frontier structure and deallocates all associated resources.
- */
 void destroy_frontier(Frontier *f);
-
-/**
- * Calculates the total number of in-use chunks across all threads.
- *
- * @note This function is not thread-safe.
- */
 int frontier_get_total_chunks(Frontier *f);
-
-/*
- * Pushes a vertex in the ThreadChunks scratch chunk. If the chunk is full, it
- * pushes it to the chunks array.
- */
 void frontier_push_vertex(Frontier *f, int thread_id, ver_t v);
-
-/*
- * Pops a vertex from the ThreadChunks scratch chunk. If it is empty, it pops a
- * chunk from the chunks array. If the chunk array is empty, it attempts to
- * steal chunks from other threads. If there is no chunk to steal available, it
- * returns VERT_MAX.
- */
 ver_t frontier_pop_vertex(Frontier *f, int thread_id);
 
 #endif // FRONTIER_H
