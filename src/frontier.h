@@ -3,160 +3,62 @@
 
 #include "config.h"
 #include <stdbool.h>
-#include <stddef.h>
+#include <stddef.h>  // Added for NULL
 #include <stdint.h>
-#include <stdlib.h>
-#include <stdatomic.h>
-#include <sched.h>
-#include <numa.h>
 
-// CNA Lock Implementation (embedded directly in frontier.h)
-typedef struct cna_node {
-    _Atomic(uintptr_t) spin;
-    _Atomic(int) socket;
-    _Atomic(struct cna_node *) secTail;
-    _Atomic(struct cna_node *) next;
-} cna_node_t;
-
-typedef struct {
-    _Atomic(cna_node_t *) tail;
-} cna_lock_t;
-
-static __thread uint32_t cur_thread_id = 0;
-
-static void init_thread_id() {
-    if (cur_thread_id == 0) {
-        cur_thread_id = 1;
-    }
-}
-
-static int current_numa_node() {
-    int core = sched_getcpu();
-    int numa_node = numa_node_of_cpu(core);
-    return numa_node;
-}
-
-#define THRESHOLD (0xffff)
-#define UNLOCK_COUNT_THRESHOLD 1024
-
-static inline uint32_t xor_random() {
-    static __thread uint32_t rv = 0;
-    if (rv == 0) rv = cur_thread_id + 1;
-    uint32_t v = rv;
-    v ^= v << 6;
-    v ^= (uint32_t)(v) >> 21;
-    v ^= v << 7;
-    rv = v;
-    return v & (UNLOCK_COUNT_THRESHOLD - 1);
-}
-
-static inline _Bool keep_lock_local() {
-    return xor_random() & THRESHOLD;
-}
-
-static inline cna_node_t* find_successor(cna_node_t *me) {
-    cna_node_t *next = atomic_load_explicit(&me->next, memory_order_relaxed);
-    int mySocket = atomic_load_explicit(&me->socket, memory_order_relaxed);
-    if (mySocket == -1) mySocket = current_numa_node();
-    if (next && atomic_load_explicit(&next->socket, memory_order_relaxed) == mySocket) {
-        return next;
-    }
-
-    cna_node_t *secHead = next;
-    cna_node_t *secTail = next;
-    if (!next) return NULL;
-
-    cna_node_t *cur = atomic_load_explicit(&next->next, memory_order_acquire);
-    while (cur) {
-        if (atomic_load_explicit(&cur->socket, memory_order_relaxed) == mySocket) {
-            if (atomic_load_explicit(&me->spin, memory_order_relaxed) > 1) {
-                cna_node_t *_spin = (cna_node_t*)atomic_load_explicit(&me->spin, memory_order_relaxed);
-                cna_node_t *_secTail = atomic_load_explicit(&_spin->secTail, memory_order_relaxed);
-                atomic_store_explicit(&_secTail->next, secHead, memory_order_relaxed);
-            } else {
-                atomic_store_explicit(&me->spin, (uintptr_t)secHead, memory_order_relaxed);
-            }
-            atomic_store_explicit(&secTail->next, NULL, memory_order_relaxed);
-            cna_node_t *_spin = (cna_node_t*)atomic_load_explicit(&me->spin, memory_order_relaxed);
-            atomic_store_explicit(&_spin->secTail, secTail, memory_order_relaxed);
-            return cur;
-        }
-        secTail = cur;
-        cur = atomic_load_explicit(&cur->next, memory_order_acquire);
-    }
-    return NULL;
-}
-
-static inline void cna_lock(cna_lock_t *lock, cna_node_t *me) {
-    atomic_store_explicit(&me->next, NULL, memory_order_relaxed);
-    atomic_store_explicit(&me->socket, -1, memory_order_relaxed);
-    atomic_store_explicit(&me->spin, 0, memory_order_relaxed);
-
-    cna_node_t *tail = atomic_exchange_explicit(&lock->tail, me, memory_order_seq_cst);
-
-    if (!tail) {
-        atomic_store_explicit(&me->spin, 1, memory_order_relaxed);
-        return;
-    }
-
-    atomic_store_explicit(&me->socket, current_numa_node(), memory_order_relaxed);
-    atomic_store_explicit(&tail->next, me, memory_order_release);
-
-    while (!atomic_load_explicit(&me->spin, memory_order_acquire)) {
-        asm volatile("nop");
-    }
-}
-
-static inline void cna_unlock(cna_lock_t *lock, cna_node_t *me) {
-    cna_node_t *next = atomic_load_explicit(&me->next, memory_order_acquire);
-
-    if (!next) {
-        uintptr_t spin = atomic_load_explicit(&me->spin, memory_order_relaxed);
-        if (spin == 1) {
-            cna_node_t *expected = me;
-            if (atomic_compare_exchange_strong_explicit(&lock->tail, &expected, NULL,
-                    memory_order_seq_cst, memory_order_relaxed)) {
-                return;
-            }
-        } else {
-            cna_node_t *secHead = (cna_node_t*)spin;
-            cna_node_t *expected = me;
-            if (atomic_compare_exchange_strong_explicit(&lock->tail, &expected,
-                    atomic_load_explicit(&secHead->secTail, memory_order_relaxed),
-                    memory_order_seq_cst, memory_order_relaxed)) {
-                atomic_store_explicit(&secHead->spin, 1, memory_order_release);
-                return;
-            }
-        }
-
-        while (!(next = atomic_load_explicit(&me->next, memory_order_acquire))) {
-        
-	        __asm__ __volatile__("pause");}
-    }
-
-    cna_node_t *succ = NULL;
-    if (keep_lock_local() && (succ = find_successor(me))) {
-        atomic_store_explicit(&succ->spin, 
-            atomic_load_explicit(&me->spin, memory_order_relaxed),
-            memory_order_release);
-    } else if (atomic_load_explicit(&me->spin, memory_order_relaxed) > 1) {
-        succ = (cna_node_t*)atomic_load_explicit(&me->spin, memory_order_relaxed);
-        cna_node_t *secTail = atomic_load_explicit(&succ->secTail, memory_order_relaxed);
-        atomic_store_explicit(&secTail->next, next, memory_order_relaxed);
-        atomic_store_explicit(&succ->spin, 1, memory_order_release);
-    } else {
-        atomic_store_explicit(&next->spin, 1, memory_order_release);
-    }
-}
-
-// Frontier implementation
 typedef mer_t ver_t;
 
+// MCS Lock structures
+typedef struct mcs_node {
+    struct mcs_node *next;
+    int locked;
+} mcs_node;
+
+typedef struct {
+    mcs_node *tail;
+} mcs_lock;
+
+// Initialize an MCS lock
+static inline void mcs_lock_init(mcs_lock *lock) {
+    lock->tail = NULL;
+}
+
+// MCS lock acquire
+static inline void mcs_lock_acquire(mcs_lock *lock, mcs_node *node) {
+    node->next = NULL;
+    node->locked = 1;
+    
+    mcs_node *prev = __atomic_exchange_n(&lock->tail, node, __ATOMIC_RELEASE);
+    if (prev != NULL) {
+        prev->next = node;
+        while (node->locked) {
+            __asm volatile ("pause" ::: "memory");
+        }
+    }
+}
+
+// MCS lock release
+static inline void mcs_lock_release(mcs_lock *lock, mcs_node *node) {
+    if (node->next == NULL) {
+        mcs_node *expected = node;
+        if (__atomic_compare_exchange_n(&lock->tail, &expected, NULL, 
+                                     0, __ATOMIC_RELEASE, __ATOMIC_RELAXED)) {
+            return;
+        }
+        while (node->next == NULL) {
+            __asm volatile ("pause" ::: "memory");
+        }
+    }
+    node->next->locked = 0;
+}
+
+// Chunk structure
 typedef struct {
     ver_t vertices[CHUNK_SIZE];
     int next_free_index;
 } Chunk;
 
+// Thread-specific chunk pool
 typedef struct {
     Chunk **chunks;
     int chunks_size;
@@ -164,15 +66,17 @@ typedef struct {
     int top_chunk;
     int next_stealable_thread;
     Chunk *scratch_chunk;
-    cna_lock_t lock;
-    cna_node_t node;
+    mcs_lock lock;
+    mcs_node node;
 } ThreadChunks;
 
+// Frontier structure
 typedef struct {
     ThreadChunks **thread_chunks;
     int *chunk_counts;
 } Frontier;
 
+// Frontier API
 Frontier *frontier_create();
 void destroy_frontier(Frontier *f);
 int frontier_get_total_chunks(Frontier *f);
