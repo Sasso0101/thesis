@@ -5,7 +5,9 @@
 
 #define MAX_THREADS 24
 
+#ifndef CHUNK_SIZE
 #define CHUNK_SIZE 64
+#endif
 #define CHUNKS_PER_THREAD 128
 
 // Seed used for picking source vertices

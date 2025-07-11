@@ -165,6 +165,18 @@ int main(int argc, char **argv) {
     return (parse_result == 1) ? 0 : 1;
   }
 
+  const char* max_threads_env = getenv("MAX_THREADS");
+  int max_threads = MAX_THREADS;
+  if (max_threads_env) {
+    int val = atoi(max_threads_env);
+    if (val > 0) {
+      max_threads = val;
+      printf("Overriding MAX_THREADS: %d (from environment variable)\n", max_threads);
+    }
+  }
+  #undef MAX_THREADS
+  #define MAX_THREADS max_threads
+
   // GraphCSR *graph = import_mtx(args.filename, METADATA_SIZE, VERT_MAX);
   mmio_csr_u32_f32_t *graph = mmio_read_csr_u32_f32(args.filename, false);
   if (graph == NULL) {

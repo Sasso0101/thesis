@@ -7,7 +7,7 @@ hca:
   scheduler: slurm
 
   default_conf:
-     time: "00:05:00" 
+    time: "00:05:00" 
 
   configs:
     - name: "pioneer_{pioneer_ncpus}cpus"
@@ -15,18 +15,21 @@ hca:
       cpus_per_task: "{pioneer_ncpus}"
       env:
         - "OMP_NUM_THREADS={pioneer_ncpus}"
+        - "MAX_THREADS={pioneer_ncpus}"
 
     - name: "arriesgado_{arriesgado_ncpus}cpus"
       partition: "arriesgado-jammy"
       cpus_per_task: "{arriesgado_ncpus}"
       env:
         - "OMP_NUM_THREADS={arriesgado_ncpus}"
+        - "MAX_THREADS={arriesgado_ncpus}"
 
     - name: "bananaf3_{bananaf3_ncpus}cpus"
       partition: "bananaf3"
       cpus_per_task: "{bananaf3_ncpus}"
       env:
         - "OMP_NUM_THREADS={bananaf3_ncpus}"
+        - "MAX_THREADS={bananaf3_ncpus}"
 
 
 local:
@@ -35,11 +38,14 @@ local:
     - name: "pioneer_{pioneer_ncpus}cpus"
       env:
         - "OMP_NUM_THREADS={pioneer_ncpus}"
+        - "MAX_THREADS={pioneer_ncpus}"
 
     - name: "arriesgado_{arriesgado_ncpus}cpus"
       env:
         - "OMP_NUM_THREADS={arriesgado_ncpus}"
+        - "MAX_THREADS={arriesgado_ncpus}"
 
     - name: "bananaf3_{bananaf3_ncpus}cpus"
       env:
         - "OMP_NUM_THREADS={bananaf3_ncpus}"
+        - "MAX_THREADS={bananaf3_ncpus}"
