@@ -66,7 +66,7 @@ void benchmark_end_timer(void) {
   // Total duration in milliseconds
   duration = (seconds) + (nanoseconds * 1e-9);
   
-  printf("Trial time: %16.5f\n", duration);
+  // printf("Trial time: %16.5f\n", duration);
 
   write_to_csv(g_benchmark_data.exp_name, g_benchmark_data.run_id,
                g_benchmark_data.params, duration);

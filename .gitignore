@@ -6,3 +6,4 @@ bin/
 .cache/
 *.csv
 compile_commands.json
+results/
