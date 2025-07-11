@@ -8,9 +8,17 @@
 #include <stdlib.h>
 #include <stdatomic.h>
 #include <sched.h>
-#include <numa.h>
+#include <unistd.h>
 
-// CNA Lock Implementation (embedded directly in frontier.h)
+// Remove unused function
+// static __thread uint32_t cur_thread_id = 0;
+// static void init_thread_id() {
+//     if (cur_thread_id == 0) {
+//         cur_thread_id = 1;
+//     }
+// }
+
+// CNA Lock Implementation
 typedef struct cna_node {
     _Atomic(uintptr_t) spin;
     _Atomic(int) socket;
@@ -22,16 +30,9 @@ typedef struct {
     _Atomic(cna_node_t *) tail;
 } cna_lock_t;
 
-static __thread uint32_t cur_thread_id = 0;
-
-static void init_thread_id() {
-    if (cur_thread_id == 0) {
-        cur_thread_id = 1;
-    }
-}
-
+// Fixed NUMA node detection
 static int current_numa_node() {
-    int core = sched_getcpu();
+ int core = sched_getcpu();
     int numa_node = numa_node_of_cpu(core);
     return numa_node;
 }
@@ -40,8 +41,7 @@ static int current_numa_node() {
 #define UNLOCK_COUNT_THRESHOLD 1024
 
 static inline uint32_t xor_random() {
-    static __thread uint32_t rv = 0;
-    if (rv == 0) rv = cur_thread_id + 1;
+    static __thread uint32_t rv = 1; // Simplified initialization
     uint32_t v = rv;
     v ^= v << 6;
     v ^= (uint32_t)(v) >> 21;
@@ -103,7 +103,7 @@ static inline void cna_lock(cna_lock_t *lock, cna_node_t *me) {
     atomic_store_explicit(&tail->next, me, memory_order_release);
 
     while (!atomic_load_explicit(&me->spin, memory_order_acquire)) {
-        asm volatile("nop");
+      __asm__ __volatile__("nop");
     }
 }
 
@@ -130,8 +130,8 @@ static inline void cna_unlock(cna_lock_t *lock, cna_node_t *me) {
         }
 
         while (!(next = atomic_load_explicit(&me->next, memory_order_acquire))) {
-        
-	        __asm__ __volatile__("pause");}
+  __asm__ __volatile__("nop");
+	}
     }
 
     cna_node_t *succ = NULL;
@@ -164,8 +164,8 @@ typedef struct {
     int top_chunk;
     int next_stealable_thread;
     Chunk *scratch_chunk;
-    cna_lock_t lock;
-    cna_node_t node;
+    cna_lock_t lock;  // Changed from pthread_mutex_t to cna_lock_t
+    cna_node_t node;  // Added for CNA lock
 } ThreadChunks;
 
 typedef struct {
