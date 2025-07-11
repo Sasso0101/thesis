@@ -2,7 +2,7 @@ sequential: true
 
 variables:
   ncpus: [1, 2, 4, 8, 16, 32, 64]
-  chunksize: [16, 32, 64, 128, 256, 512, 1024]
+  chunksize: [16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
   implname: ["mutex"]
 
 command: "module load cmake/3.28.1 && make clean && CHUNK_SIZE={chunksize} MAX_THREADS={ncpus} make -j64 bin/bfs && mkdir -p targets && mv bin/bfs targets/bfs_{implname}_chunksize{chunksize}_{ncpus}cpus && echo \"Built: targets/bfs_{implname}_chunksize{chunksize}_{ncpus}cpus\" || echo \"Something went wrong\""

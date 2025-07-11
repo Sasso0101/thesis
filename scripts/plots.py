@@ -12,12 +12,12 @@ FONT_AXES = 18
 FONT_TICKS = 16
 FONT_LEGEND = 14
 
-plt.rc('axes', titlesize=FONT_AXES)     # fontsize of the axes title
-plt.rc('axes', labelsize=FONT_AXES)    # fontsize of the x and y labels
-plt.rc('xtick', labelsize=FONT_TICKS)    # fontsize of the tick labels
-plt.rc('ytick', labelsize=FONT_TICKS)    # fontsize of the tick labels
+plt.rc('axes', titlesize=FONT_AXES)       # fontsize of the axes title
+plt.rc('axes', labelsize=FONT_AXES)       # fontsize of the x and y labels
+plt.rc('xtick', labelsize=FONT_TICKS)     # fontsize of the tick labels
+plt.rc('ytick', labelsize=FONT_TICKS)     # fontsize of the tick labels
 plt.rc('legend', fontsize=FONT_LEGEND)    # legend fontsize
-plt.rc('figure', titlesize=FONT_TITLE)  # fontsize of the figure title
+plt.rc('figure', titlesize=FONT_TITLE)    # fontsize of the figure title
 
 OUT_DIR = Path('results')
 OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -36,13 +36,21 @@ def parse_stdout(stdout: str) -> float:
 
 parsed_jobs = []
 for job in jobs:
-  if job.status not in ['COMPLETED', 'TIMEOUT']:
+  if job.status not in ['COMPLETED', 'TIMEOUT'] or job.tag == 'compile':
     # print(('-'*40)+'\nSkipping')
     # pprint(job)
     continue
 
   binary, args = job.parse_command_args()
   avg_runtime = parse_stdout(job.get_stdout())
+
+  if not args or 'f' not in args:
+    print(('-'*40)+'\nWeird')
+    print(binary)
+    print(args)
+    pprint(job)
+    continue
+
   parsed_jobs.append({
     'dataset': Path(args['f']).stem,
     'board': re.match(r'(\w+)_\d+cpus', job.config_name).group(1),
@@ -55,7 +63,6 @@ for job in jobs:
 df = pd.DataFrame(parsed_jobs)
 print(df)
 
-df = df[df['dataset'] != 'Stranke94']
 df.dropna(inplace=True)
 
 # Plotting style
@@ -78,35 +85,39 @@ def line_plot(ax, data, title):
   ax.grid(True)
   ax.legend(title="Implementation")
 
-# === Plot per dataset ===
-for dataset_name, df_dataset in df.groupby('dataset'):
-  y_lim_top = df_dataset['runtime'].max() * 1.2
-  y_lim_bottom = df_dataset['runtime'].min() * 0.8
-  x_ticks = df_dataset['num_cpus'].unique().astype(int)
-  chunks = sorted(df_dataset["chunksize"].unique())
-  n = len(chunks)
-  # choose grid size ~square
-  n_cols = int(n**0.5 + 0.999)
-  n_rows = (n + n_cols - 1) // n_cols
 
-  fig, axes = plt.subplots(n_rows, n_cols, figsize=(6 * n_cols, 5 * n_rows))
-  axes = axes.flat if n > 1 else [axes]
+for board_name, df_board in df.groupby('board'):
+  for dataset_name, df_dataset in df_board.groupby('dataset'):
 
-  for ax, ch in zip(axes, chunks):
-    ax.set_ylim(y_lim_bottom, y_lim_top)
-    ax.set_xticks(x_ticks)
-    ch_grp = df_dataset[df_dataset["chunksize"] == ch]
-    line_plot(ax, ch_grp, f"Chunksize = {ch}")
-  # Hide unused axes (if any)
-  for ax in axes[n:]:
-    ax.axis("off")
+    y_lim_top = df_dataset['runtime'].max() * 1.2
+    y_lim_bottom = df_dataset['runtime'].min() * 0.8
+    x_ticks = df_dataset['num_cpus'].unique().astype(int)
 
-  fig.suptitle(f"Strong Scaling - Graph: {dataset_name}", fontsize=16, y=0.98)
-  fig.tight_layout()
-  path = OUT_DIR / f'string_scaling_{dataset_name}.png'
-  plt.savefig(path)
-  print(f'Plot saved to {path.resolve().absolute()}')
-  plt.close()
+    chunks = sorted(df_dataset["chunksize"].unique())
+    n = len(chunks)
+    # choose grid size ~square
+    n_cols = int(n**0.5 + 0.999)
+    n_rows = (n + n_cols - 1) // n_cols
+
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(6 * n_cols, 5 * n_rows))
+    axes = axes.flat if n > 1 else [axes]
+
+    for ax, ch in zip(axes, chunks):
+      ax.set_ylim(y_lim_bottom, y_lim_top)
+      ax.set_xticks(x_ticks)
+      ch_grp = df_dataset[df_dataset["chunksize"] == ch]
+      line_plot(ax, ch_grp, f"Chunksize = {ch}")
+
+    # Hide unused axes (if any)
+    for ax in axes[n:]:
+      ax.axis("off")
+
+    fig.suptitle(f"Strong Scaling - Graph: {dataset_name} - Board: {board_name}", y=0.98)
+    fig.tight_layout()
+    path = OUT_DIR / f'{board_name}_strong_scaling_{dataset_name}.png'
+    plt.savefig(path)
+    print(f'Plot saved to {path.resolve().absolute()}')
+    plt.close()
 
 
   # plt.figure(figsize=(8, 6))
