@@ -11,26 +11,16 @@ def parse_stdout(stdout: str) -> float:
 
 
 sout = '''
-Trial time:          4.42019
-"BFS",0,"dataset=datasets/large_diameter/GAP/GAP-road/GAP-road.bmtx,threads=24,chunk_size=64",4.4202
-Trial time:          5.67220
-"BFS",1,"dataset=datasets/large_diameter/GAP/GAP-road/GAP-road.bmtx,threads=24,chunk_size=64",5.6722
-Trial time:          4.34982
-"BFS",2,"dataset=datasets/large_diameter/GAP/GAP-road/GAP-road.bmtx,threads=24,chunk_size=64",4.3498
-Trial time:          6.00608
-"BFS",3,"dataset=datasets/large_diameter/GAP/GAP-road/GAP-road.bmtx,threads=24,chunk_size=64",6.0061
-Trial time:          5.71320
-"BFS",4,"dataset=datasets/large_diameter/GAP/GAP-road/GAP-road.bmtx,threads=24,chunk_size=64",5.7132
-Trial time:          5.50007
-"BFS",5,"dataset=datasets/large_diameter/GAP/GAP-road/GAP-road.bmtx,threads=24,chunk_size=64",5.5001
-Trial time:          5.46055
-"BFS",6,"dataset=datasets/large_diameter/GAP/GAP-road/GAP-road.bmtx,threads=24,chunk_size=64",5.4606
-Trial time:          5.16595
-"BFS",7,"dataset=datasets/large_diameter/GAP/GAP-road/GAP-road.bmtx,threads=24,chunk_size=64",5.1660
-Trial time:          5.54589
-"BFS",8,"dataset=datasets/large_diameter/GAP/GAP-road/GAP-road.bmtx,threads=24,chunk_size=64",5.5459
-Trial time:          3.74587
-"BFS",9,"dataset=datasets/large_diameter/GAP/GAP-road/GAP-road.bmtx,threads=24,chunk_size=64",3.7459
+run_id=0,diameter=20131,threads=1,chunk_size=4096,max_chunks=4,1.6930
+run_id=1,diameter=17633,threads=1,chunk_size=4096,max_chunks=3,1.7029
+run_id=2,diameter=22275,threads=1,chunk_size=4096,max_chunks=3,1.6902
+run_id=3,diameter=17103,threads=1,chunk_size=4096,max_chunks=3,1.7147
+run_id=4,diameter=18355,threads=1,chunk_size=4096,max_chunks=3,1.7343
+run_id=5,diameter=17429,threads=1,chunk_size=4096,max_chunks=3,1.7154
+run_id=6,diameter=24565,threads=1,chunk_size=4096,max_chunks=3,1.6545
+run_id=7,diameter=17914,threads=1,chunk_size=4096,max_chunks=3,1.7162
+run_id=8,diameter=17193,threads=1,chunk_size=4096,max_chunks=3,1.6942
+run_id=9,diameter=15851,threads=1,chunk_size=4096,max_chunks=3,1.6996
 '''
 
 print(parse_stdout(sout))
