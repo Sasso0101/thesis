@@ -29,9 +29,7 @@ def parse_stdout(stdout: str) -> float:
   lines = stdout.split('\n')
   times = []
   for i in range(2, len(lines), 2):
-    parts = lines[i].split(',')
-    if len(parts) > 3 and int(parts[1]) > 3:
-      times.append(float(parts[-1]))
+    times.append(float(lines[i].split(',')[-1]))
   # TODO remove times for which diameter too high/low
   return geometric_mean(times) if len(times) > 0 else np.nan
 

@@ -1,15 +1,17 @@
-# europe_osm read timeouts (walltime: 5min)
+# sequential: true
 
 variables:
   pioneer_ncpus: [1, 2, 4, 8, 16, 32, 64]
   bananaf3_ncpus: [1, 2, 4, 8]
   arriesgado_ncpus: [1, 2, 4]
 
-  chunksize: [16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
+  chunksize: [16, 32, 64, 256, 1024, 4096]
 
-  # "datasets/large_diameter/GAP/GAP-road/GAP-road.bmtx"
-  mtx: ["datasets/large_diameter/DIMACS10/rgg_n_2_22_s0/rgg_n_2_22_s0.bmtx"] # datasets/large_diameter/matrices_list.txt
-  n: [30]
+  mtx:
+    - "../datasets/large_diameter/GAP/GAP-road/GAP-road.bmtx"
+    - "../datasets/large_diameter/DIMACS10/rgg_n_2_22_s0/rgg_n_2_22_s0.bmtx"
+    - "../datasets/large_diameter/DIMACS10/europe_osm/europe_osm.bmtx"
+  n: [10]
   implname: ["mutex"]
 
 jobs:
