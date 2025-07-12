@@ -2,6 +2,8 @@ variables:
   pioneer_ncpus: [1, 2, 4, 8, 16, 32, 64]
   bananaf3_ncpus: [1, 2, 4, 8]
   arriesgado_ncpus: [1, 2, 4]
+  hpc_ncpus: [1, 2, 4, 8, 16, 24]
+  baldo_ncpus: [1, 2, 4, 8]
   
 hca:
   scheduler: slurm
@@ -31,6 +33,35 @@ hca:
       env:
         - "OMP_NUM_THREADS={bananaf3_ncpus}"
 
+hpc:
+  scheduler: pbs
+
+  default_conf:
+    queue: short_cpuQ
+    mem: 100gb
+    cpus: 96
+    walltime: "00:05:00" 
+
+  configs:
+    - name: "hpc_{hpc_ncpus}cpus"
+      env:
+        - "OMP_NUM_THREADS={hpc_ncpus}"
+
+baldo:
+  scheduler: slurm
+
+  default_conf:
+    nodes: 1
+    ntasks: 1
+    time: "00:10:00" 
+    gpus: 0
+
+  configs:
+    - name: "baldo_{baldo_ncpus}cpus"
+      partition: "edu-medium"
+      cpus_per_task: "{baldo_ncpus}"
+      env:
+        - "OMP_NUM_THREADS={baldo_ncpus}"
 
 local:
   scheduler: local
