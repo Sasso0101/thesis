@@ -7,7 +7,10 @@ hca:
   scheduler: slurm
 
   default_conf:
-    time: "00:05:00" 
+    nodes: 1
+    ntasks: 1
+    exclusive: true
+    time: "00:10:00" 
 
   configs:
     - name: "pioneer_{pioneer_ncpus}cpus"

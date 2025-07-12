@@ -1,18 +1,18 @@
 path: ./datasets
 
-graph500:
-  generators:
-    graph500:
-      scale:
-        - 20
-        - 20
-        - 21
-        - 21
-      edge_factor:
-        - 8
-        - 32
-        - 8
-        - 16
+# graph500:
+#   generators:
+#     graph500:
+#       scale:
+#         - 20
+#         - 20
+#         - 21
+#         - 21
+#       edge_factor:
+#         - 8
+#         - 32
+#         - 8
+#         - 16
 
 # small_diameter:
 #   suite_sparse_matrix_list:
@@ -30,4 +30,4 @@ large_diameter:
     - GAP/GAP-road
     - DIMACS10/europe_osm
     - DIMACS10/rgg_n_2_22_s0
-    - DIMACS10/rgg_n_2_24_s0
+    # - DIMACS10/rgg_n_2_24_s0 too big
