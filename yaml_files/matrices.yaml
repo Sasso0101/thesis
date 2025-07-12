@@ -28,7 +28,6 @@ graph500:
 large_diameter:
   suite_sparse_matrix_list:
     - GAP/GAP-road
-    - Pajek/Stranke94
     - DIMACS10/europe_osm
     - DIMACS10/rgg_n_2_22_s0
     - DIMACS10/rgg_n_2_24_s0

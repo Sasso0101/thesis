@@ -32,6 +32,7 @@ def parse_stdout(stdout: str) -> float:
     parts = lines[i].split(',')
     if len(parts) > 3 and int(parts[1]) > 3:
       times.append(float(parts[-1]))
+  # TODO remove times for which diameter too high/low
   return geometric_mean(times) if len(times) > 0 else np.nan
 
 parsed_jobs = []
@@ -89,8 +90,8 @@ def line_plot(ax, data, title):
 for board_name, df_board in df.groupby('board'):
   for dataset_name, df_dataset in df_board.groupby('dataset'):
 
-    y_lim_top = df_dataset['runtime'].max() * 1.2
-    y_lim_bottom = df_dataset['runtime'].min() * 0.8
+    y_lim_top = df_dataset['runtime'].max() * 1.05
+    y_lim_bottom = df_dataset['runtime'].min() * 0.95
     x_ticks = df_dataset['num_cpus'].unique().astype(int)
 
     chunks = sorted(df_dataset["chunksize"].unique())

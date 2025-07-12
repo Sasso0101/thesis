@@ -165,18 +165,6 @@ int main(int argc, char **argv) {
     return (parse_result == 1) ? 0 : 1;
   }
 
-  // const char* max_threads_env = getenv("MAX_THREADS");
-  // int max_threads = MAX_THREADS;
-  // if (max_threads_env) {
-  //   int val = atoi(max_threads_env);
-  //   if (val > 0) {
-  //     max_threads = val;
-  //     printf("Overriding MAX_THREADS: %d (from environment variable)\n", max_threads);
-  //   }
-  // }
-  // #undef MAX_THREADS
-  // #define MAX_THREADS max_threads
-
   // GraphCSR *graph = import_mtx(args.filename, METADATA_SIZE, VERT_MAX);
   mmio_csr_u32_f32_t *graph = mmio_read_csr_u32_f32(args.filename, false);
   if (graph == NULL) {
@@ -199,12 +187,7 @@ int main(int argc, char **argv) {
     BENCHMARK_END();
 
     // snprintf(param_buffer, sizeof(param_buffer), "dataset=%s,threads=%d,chunk_size=%d", args.filename, MAX_THREADS, CHUNK_SIZE);
-    uint32_t diameter = 0;
-    for (mer_t j = 0; j < graph->nrows; j++) {
-      if (distances[j] > diameter)
-        diameter = distances[j];
-    }
-    snprintf(param_buffer, sizeof(param_buffer), "diameter=%d,threads=%d,chunk_size=%d", diameter, MAX_THREADS, CHUNK_SIZE);
+    snprintf(param_buffer, sizeof(param_buffer), "diameter=%d,threads=%d,chunk_size=%d", distance, MAX_THREADS, CHUNK_SIZE);
 
     if (args.check) {
       check_bfs_correctness(graph, distances, sources[i]);
