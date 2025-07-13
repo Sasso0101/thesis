@@ -26,6 +26,8 @@ atomic_int active_threads;
 volatile uint32_t exploration_done;
 volatile int distance;
 
+int max_chunks;
+
 thread_pool_t tp;
 
 void top_down(MergedCSR *merged_csr, Frontier *current_frontier,
@@ -70,9 +72,11 @@ void *thread_main(void *arg) {
       Frontier *temp = f2;
       f2 = f1;
       f1 = temp;
-      if (frontier_get_total_chunks(f1) == 0)
+      int chunks = frontier_get_total_chunks(f1);
+      if (chunks == 0)
         exploration_done = 1;
-
+      if (chunks > max_chunks)
+        max_chunks = chunks;
       // printf("%u \n", distance);
       // print_chunk_counts(f1);
       atomic_thread_fence(memory_order_seq_cst);
@@ -106,6 +110,7 @@ void bfs(uint32_t source) {
   exploration_done = 0;
   active_threads = MAX_THREADS;
   distance = 1;
+  max_chunks = 0;
   atomic_thread_fence(memory_order_seq_cst);
   thread_pool_start_wait(&tp);
 }
@@ -179,16 +184,17 @@ int main(int argc, char **argv) {
   memset(distances, UINT32_MAX, graph->nrows * sizeof(uint32_t));
   initialize_bfs(graph);
 
-  static char param_buffer[256];
-
   for (int i = 0; i < args.runs; i++) {
-    snprintf(param_buffer, sizeof(param_buffer), "dataset=%s,threads=%d,chunk_size=%d", args.filename, MAX_THREADS, CHUNK_SIZE);
-    BENCHMARK_START("BFS", i, param_buffer);
+    BENCHMARK_START();
     bfs(sources[i]);
-    BENCHMARK_END();
+    double duration = BENCHMARK_END();
+
+    printf("run_id=%d,diameter=%d,threads=%d,chunk_size=%d,max_chunks=%d,%.4f\n", i, distance, MAX_THREADS, CHUNK_SIZE, max_chunks, duration);
+
     if (args.check) {
       check_bfs_correctness(graph, distances, sources[i]);
     }
+
     memset(distances, UINT32_MAX, merged_csr->num_vertices * sizeof(uint32_t));
   }
   // Terminate threads
