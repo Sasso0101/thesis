@@ -2,9 +2,14 @@
 CC ?= gcc
 CFLAGS = -Wall -Wextra -O3 -std=c11 -MMD -MP
 
+# --- Experimental Evaluation params ---
+CHUNK_SIZE ?= 64
+MAX_THREADS ?= 24
+PREPROCESSOR_VARS = -DCHUNK_SIZE=$(CHUNK_SIZE) -DMAX_THREADS=$(MAX_THREADS)
+
 # --- Library Configuration ---
 # Set the path to the root of the distributed_mmio library.
-DIST_MMIO_PATH = MtxMan/distributed_mmio
+DIST_MMIO_PATH = distributed_mmio
 LIB_STATIC_FULL_PATH = $(DIST_MMIO_PATH)/build/libdistributed_mmio.a
 
 # CPPFLAGS: Pre-processor flags, primarily for include paths (-I).
@@ -51,14 +56,14 @@ $(LIB_STATIC_FULL_PATH):
 $(TARGET): $(OBJS) $(LIB_STATIC_FULL_PATH)
 	@echo "==> Linking objects with the distributed_mmio library..."
 	@mkdir -p $(BIN_DIR)
-	$(CXX) -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS)
+	$(CXX) -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS) $(PREPROCESSOR_VARS)
 	@echo "==> Build successful: $(TARGET)"
 
 # Pattern rule to compile a .c file into a .o file.
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@echo "==> Compiling: $<"
 	@mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(PREPROCESSOR_VARS) -c $< -o $@
 
 # Include auto-generated dependency files if they exist
 -include $(DEPS)
