@@ -1,6 +1,7 @@
 from pathlib import Path
 import re
 from statistics import geometric_mean
+from typing import List
 import sbatchman as sbm
 from pprint import pprint
 import pandas as pd
@@ -22,8 +23,14 @@ plt.rc('figure', titlesize=FONT_TITLE)    # fontsize of the figure title
 OUT_DIR = Path('results')
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-jobs = sbm.jobs_list()
-# pprint(jobs)
+### Jobs Functions ###
+
+def filter_jobs(jobs: List[sbm.Job]) -> List[sbm.Job]:
+  filtered_jobs = []
+  for job in jobs:
+    if job.status in ['COMPLETED'] and 'compile' not in job.tag:
+      filtered_jobs.append(job)
+  return filtered_jobs
 
 def parse_stdout(stdout: str) -> float:
   lines = stdout.split('\n')
@@ -33,22 +40,19 @@ def parse_stdout(stdout: str) -> float:
   # TODO remove times for which diameter too high/low
   return geometric_mean(times) if len(times) > 0 else np.nan
 
+### END Jobs Functions ###
+
+
+jobs = sbm.jobs_list(from_active=True, from_archived=True)
+jobs = filter_jobs(jobs)
+
+
+### Jobs to Dataframe ###
+
 parsed_jobs = []
 for job in jobs:
-  if job.status not in ['COMPLETED', 'TIMEOUT'] or job.tag == 'compile':
-    # print(('-'*40)+'\nSkipping')
-    # pprint(job)
-    continue
-
   binary, args = job.parse_command_args()
   avg_runtime = parse_stdout(job.get_stdout())
-
-  if not args or 'f' not in args:
-    print(('-'*40)+'\nWeird')
-    print(binary)
-    print(args)
-    pprint(job)
-    continue
 
   parsed_jobs.append({
     'dataset': Path(args['f']).stem,
@@ -60,11 +64,12 @@ for job in jobs:
   })
 
 df = pd.DataFrame(parsed_jobs)
+df.dropna(inplace=True)
 print(df)
 
-df.dropna(inplace=True)
+### END Jobs to Dataframe ###
 
-# Plotting style
+### Plots ###
 plt.style.use("seaborn-v0_8-colorblind")
 
 def line_plot(ax, data, title):
@@ -83,7 +88,6 @@ def line_plot(ax, data, title):
   ax.set_title(title)
   ax.grid(True)
   ax.legend(title="Implementation")
-
 
 for board_name, df_board in df.groupby('board'):
   for dataset_name, df_dataset in df_board.groupby('dataset'):
@@ -152,3 +156,5 @@ for board_name, df_board in df.groupby('board'):
 # plt.savefig(path)
 # print(f'Plot saved to {path.resolve().absolute()}')
 # plt.close()
+
+### END Plots ###

@@ -20,10 +20,10 @@ jobs:
     config_jobs:
       - tag: "{implname}_chunksize_{chunksize}"
 
-  - config: "arriesgado_{arriesgado_ncpus}cpus"
-    command: "./targets/bfs_{implname}_chunksize{chunksize}_{arriesgado_ncpus}cpus -f {mtx} -n {n}"
-    config_jobs:
-      - tag: "{implname}_chunksize_{chunksize}"
+  # - config: "arriesgado_{arriesgado_ncpus}cpus"
+  #   command: "./targets/bfs_{implname}_chunksize{chunksize}_{arriesgado_ncpus}cpus -f {mtx} -n {n}"
+  #   config_jobs:
+  #     - tag: "{implname}_chunksize_{chunksize}"
 
   - config: "bananaf3_{bananaf3_ncpus}cpus"
     command: "./targets/bfs_{implname}_chunksize{chunksize}_{bananaf3_ncpus}cpus -f {mtx} -n {n}"
