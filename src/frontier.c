@@ -1,125 +1,107 @@
 #include "frontier.h"
 #include <assert.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+void allocate_chunks(ThreadChunks *thread, int count) {
+  thread->chunks = (Chunk **)realloc(
+      thread->chunks, (thread->chunks_size + count) * sizeof(Chunk *));
+  for (int i = 0; i < count; i++) {
+    thread->chunks[thread->top_chunk + i] = (Chunk *)malloc(sizeof(Chunk));
+    thread->chunks[thread->top_chunk + i]->next_free_index = 0;
+  }
+  thread->chunks_size += count;
+}
 
 Frontier *frontier_create() {
-    Frontier *f = (Frontier *)malloc(sizeof(Frontier));
-    f->thread_chunks = (ThreadChunks **)malloc(sizeof(ThreadChunks *) * MAX_THREADS);
-    f->chunk_counts = (int *)calloc(MAX_THREADS, sizeof(int));
+  Frontier *f = (Frontier *)malloc(sizeof(Frontier));
+  f->thread_chunks =
+      (ThreadChunks **)malloc(sizeof(ThreadChunks *) * MAX_THREADS);
+  f->thread_chunk_counts = (int *)malloc(sizeof(int) * MAX_THREADS);
 
-    for (int i = 0; i < MAX_THREADS; i++) {
-        f->thread_chunks[i] = (ThreadChunks *)malloc(sizeof(ThreadChunks));
-        f->thread_chunks[i]->chunks = (Chunk **)malloc(sizeof(Chunk *) * CHUNKS_PER_THREAD);
-        f->thread_chunks[i]->chunks_size = CHUNKS_PER_THREAD;
-        f->thread_chunks[i]->chunks[0] = (Chunk *)malloc(sizeof(Chunk));
-        f->thread_chunks[i]->chunks[0]->next_free_index = 0;
-        f->thread_chunks[i]->scratch_chunk = f->thread_chunks[i]->chunks[0];
-        f->thread_chunks[i]->top_chunk = 0;
-        f->thread_chunks[i]->initialized_count = 1;
-        f->thread_chunks[i]->next_stealable_thread = (i + 1) % MAX_THREADS;
-        f->chunk_counts[i] = 0;
-        f->thread_chunks[i]->lock.tail = NULL;
-    }
-    return f;
+  for (int i = 0; i < MAX_THREADS; i++) {
+    f->thread_chunks[i] = (ThreadChunks *)malloc(sizeof(ThreadChunks));
+    f->thread_chunks[i]->chunks_size = 0;
+    allocate_chunks(f->thread_chunks[i], INITIAL_CHUNKS_PER_THREAD);
+    f->thread_chunks[i]->top_chunk = 0;
+    f->thread_chunk_counts[i] = 0;
+    f->thread_chunks[i]->lock.tail = NULL;
+  }
+  return f;
 }
 
-void destroy_frontier(Frontier *f) {
-    for (int i = 0; i < MAX_THREADS; i++) {
-        for (int j = 0; j < f->thread_chunks[i]->initialized_count; j++) {
-            free(f->thread_chunks[i]->chunks[j]);
-        }
-        free(f->thread_chunks[i]->chunks);
-        free(f->thread_chunks[i]);
+void frontier_destroy(Frontier *f) {
+  for (int i = 0; i < MAX_THREADS; i++) {
+    for (int j = 0; j < f->thread_chunks[i]->chunks_size; j++) {
+      free(f->thread_chunks[i]->chunks[j]);
     }
-    free(f->thread_chunks);
-    free(f->chunk_counts);
-    free(f);
+    free(f->thread_chunks[i]->chunks);
+    // No need to destroy CNA lock as it has no resources to free
+  }
+  free(f->thread_chunks);
+  free(f);
 }
 
-void thread_new_scratch_chunk(ThreadChunks *t, int *chunk_counter) {
-    mcs_lock_acquire(&t->lock, &t->node);
-    t->top_chunk++;
-    if (t->top_chunk >= t->chunks_size) {
-        t->chunks_size *= 2;
-        t->chunks = (Chunk **)realloc(t->chunks, t->chunks_size * sizeof(Chunk *));
-    }
-    if (t->top_chunk >= t->initialized_count) {
-        t->chunks[t->top_chunk] = (Chunk *)malloc(sizeof(Chunk));
-        t->chunks[t->top_chunk]->next_free_index = 0;
-        t->initialized_count++;
-    }
-    (*chunk_counter)++;
-    mcs_lock_release(&t->lock, &t->node);
-    t->scratch_chunk = t->chunks[t->top_chunk];
+Chunk *frontier_create_chunk(Frontier *f, int thread_id) {
+  ThreadChunks *thread = f->thread_chunks[thread_id];
+  mcs_lock_acquire(&thread->lock, &thread->node);
+  // Check if the thread's chunks array is full
+  if (thread->top_chunk >= thread->chunks_size) {
+    // Double the size of the chunks array
+    allocate_chunks(thread, thread->chunks_size);
+  }
+  f->thread_chunk_counts[thread_id]++;
+  mcs_lock_release(&thread->lock, &thread->node);
+  return thread->chunks[thread->top_chunk++];
 }
 
-Chunk *thread_remove_chunk(ThreadChunks *t, int *chunk_counter) {
-    mcs_lock_acquire(&t->lock, &t->node);
-    Chunk *c = NULL;
-    if (t->top_chunk > 0) {
-        t->top_chunk--;
-        c = t->chunks[t->top_chunk];
-        (*chunk_counter)--;
-    }
-    mcs_lock_release(&t->lock, &t->node);
-    return c;
+Chunk *frontier_remove_chunk(Frontier *f, int thread_id) {
+  ThreadChunks *thread = f->thread_chunks[thread_id];
+  mcs_lock_acquire(&thread->lock, &thread->node);
+  if (thread->top_chunk > 0) {
+    thread->top_chunk--;
+    Chunk *chunk = thread->chunks[thread->top_chunk];
+    f->thread_chunk_counts[thread_id]--;
+    mcs_lock_release(&thread->lock, &thread->node);
+    return chunk;
+  } else {
+    mcs_lock_release(&thread->lock, &thread->node);
+    return NULL; // No chunks available
+  }
 }
 
-void chunk_push_vertex(Chunk *c, ver_t v) {
-    assert(c != NULL && "Trying to insert in NULL chunk!");
-    assert(c->next_free_index < CHUNK_SIZE && "Trying to insert in full chunk!");
-    c->vertices[c->next_free_index] = v;
-    c->next_free_index++;
+void chunk_push_vertex(Chunk *c, mer_t v) {
+  assert(c != NULL && "Trying to insert in NULL chunk!");
+  assert(c->next_free_index < CHUNK_SIZE && "Trying to insert in full chunk!");
+  c->vertices[c->next_free_index] = v;
+  c->next_free_index++;
 }
 
-ver_t chunk_pop_vertex(Chunk *c) {
-    if (c->next_free_index > 0) {
-        c->next_free_index--;
-        return c->vertices[c->next_free_index];
-    }
+mer_t chunk_pop_vertex(Chunk *c) {
+  if (c->next_free_index > 0) {
+    c->next_free_index--;
+    return c->vertices[c->next_free_index];
+  } else {
     return VERT_MAX;
+  }
 }
 
 int frontier_get_total_chunks(Frontier *f) {
-    int total = 0;
-    for (int i = 0; i < MAX_THREADS; i++) {
-        total += f->chunk_counts[i] +
-                (f->thread_chunks[i]->scratch_chunk->next_free_index > 0 ? 1 : 0);
-    }
-    return total;
+  int total = 0;
+  for (int i = 0; i < MAX_THREADS; i++) {
+    total += f->thread_chunk_counts[i];
+  }
+  return total;
 }
 
-void frontier_push_vertex(Frontier *f, int thread_id, ver_t v) {
-    ThreadChunks *t = f->thread_chunks[thread_id];
-    if (t->scratch_chunk->next_free_index == CHUNK_SIZE) {
-        thread_new_scratch_chunk(t, &f->chunk_counts[thread_id]);
-    }
-    chunk_push_vertex(t->scratch_chunk, v);
-}
-
-ver_t frontier_pop_vertex(Frontier *f, int thread_id) {
-    ThreadChunks *t = f->thread_chunks[thread_id];
-    if (t->scratch_chunk->next_free_index == 0) {
-        Chunk *c = thread_remove_chunk(t, &f->chunk_counts[thread_id]);
-        if (c != NULL) {
-            t->scratch_chunk = c;
-        } else {
-            if (t->scratch_chunk == NULL) {
-                int *next_stealable_thread = &t->next_stealable_thread;
-                while (f->chunk_counts[*next_stealable_thread] == 0 &&
-                      *next_stealable_thread != thread_id) {
-                    *next_stealable_thread = (*next_stealable_thread + 1) % MAX_THREADS;
-                }
-                if (*next_stealable_thread == thread_id) {
-                    return VERT_MAX;
-                } else {
-                    t->scratch_chunk = thread_remove_chunk(
-                        f->thread_chunks[*next_stealable_thread],
-                        &f->chunk_counts[*next_stealable_thread]);
-                }
-            }
-        }
-    }
-    return chunk_pop_vertex(t->scratch_chunk);
+Chunk *thread_remove_chunk(ThreadChunks *t, int *chunk_counter) {
+  mcs_lock_acquire(&t->lock, &t->node);
+  Chunk *c = NULL;
+  if (t->top_chunk > 0) {
+    t->top_chunk--;
+    c = t->chunks[t->top_chunk];
+    (*chunk_counter)--;
+  }
+  mcs_lock_release(&t->lock, &t->node);
+  return c;
 }

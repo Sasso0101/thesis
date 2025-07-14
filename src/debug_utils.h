@@ -11,7 +11,7 @@
 void print_chunk_counts(const Frontier *f) {
   printf("Chunk counts: ");
   for (int i = 0; i < MAX_THREADS; i++) {
-    printf("%5d", f->chunk_counts[i]);
+    printf("%5d", f->thread_chunk_counts[i]);
   }
   printf("\n");
 }

@@ -6,3 +6,5 @@ bin/
 .cache/
 *.csv
 compile_commands.json
+build/
+.DS_Store
