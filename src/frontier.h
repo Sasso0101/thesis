@@ -32,7 +32,7 @@ static inline void mcs_lock_acquire(mcs_lock *lock, mcs_node *node) {
     if (prev != NULL) {
         prev->next = node;
         while (node->locked) {
-            __asm volatile ("pause" ::: "memory");
+      __asm__ __volatile__("nop");
         }
     }
 }
@@ -46,7 +46,7 @@ static inline void mcs_lock_release(mcs_lock *lock, mcs_node *node) {
             return;
         }
         while (node->next == NULL) {
-            __asm volatile ("pause" ::: "memory");
+      __asm__ __volatile__("nop");
         }
     }
     node->next->locked = 0;
