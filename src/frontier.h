@@ -9,6 +9,7 @@
 #include <stdatomic.h>
 #include <sched.h>
 #include <unistd.h>
+#include <numa.h>
 
 // Remove unused function
 // static __thread uint32_t cur_thread_id = 0;
