@@ -12,8 +12,12 @@
  * initialized_count.
  */
 void allocate_chunks(ThreadChunks *thread, int count) {
-  thread->chunks = (Chunk **)realloc(thread->chunks,
-                                     (thread->chunks_size + count) * sizeof(Chunk *));
+  if (thread->chunks_size == 0) {
+    thread->chunks = (Chunk **)malloc(INITIAL_CHUNKS_PER_THREAD * sizeof(Chunk *));
+  } else {
+    thread->chunks = (Chunk **)realloc(thread->chunks,
+                                      (thread->chunks_size + count) * sizeof(Chunk *));
+  }
   for (int i = 0; i < count; i++) {
     thread->chunks[thread->top_chunk + i] = (Chunk *)malloc(sizeof(Chunk));
     thread->chunks[thread->top_chunk + i]->next_free_index = 0;
@@ -30,8 +34,8 @@ Frontier *frontier_create() {
   for (int i = 0; i < MAX_THREADS; i++) {
     f->thread_chunks[i] = (ThreadChunks *)malloc(sizeof(ThreadChunks));
     f->thread_chunks[i]->chunks_size = 0;
-    allocate_chunks(f->thread_chunks[i], INITIAL_CHUNKS_PER_THREAD);
     f->thread_chunks[i]->top_chunk = 0;
+    allocate_chunks(f->thread_chunks[i], INITIAL_CHUNKS_PER_THREAD);
     f->thread_chunk_counts[i] = 0;
     pthread_mutex_init(&f->thread_chunks[i]->lock, NULL);
   }
