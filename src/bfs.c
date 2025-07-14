@@ -1,19 +1,20 @@
-#define _GNU_SOURCE
+#include <stdlib.h>
+#include <string.h>
+//#define _GNU_SOURCE
 #include "cli_parser.h"
+#include "benchmark.h"
 #include "config.h"
 #include "debug_utils.h"
 #include "frontier.h"
 #include "merged_csr.h"
-#include "mmio_c_wrapper.h"
 #include "mt19937-64.h"
 #include "thread_pool.h"
+#include "mmio_c_wrapper.h"
 #include <assert.h>
 #include <pthread.h>
 #include <stdatomic.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
 
 MergedCSR *merged_csr;
@@ -25,58 +26,20 @@ atomic_int active_threads;
 volatile uint32_t exploration_done;
 volatile int distance;
 
-int max_chunks;
-
 thread_pool_t tp;
 
-void top_down_chunk(MergedCSR *merged_csr, Frontier *next, Chunk *c,
-                    Chunk **dest, int distance, int thread_id) {
-  assert(c != NULL && "Chunk passed to top_down_chunk is NULL!");
-  mer_t v = VERT_MAX;
-  while ((v = chunk_pop_vertex(c)) != VERT_MAX) {
-    mer_t end = v + DEGREE(merged_csr, v) + METADATA_SIZE;
-    for (mer_t i = v + METADATA_SIZE; i < end; i++) {
+void top_down(MergedCSR *merged_csr, Frontier *current_frontier,
+              Frontier *next_frontier, int distance, int thread_id) {
+  mer_t v;
+  while ((v = frontier_pop_vertex(current_frontier, thread_id)) != VERT_MAX) {
+    mer_t end = START_MERGED_INDICES(merged_csr, v) + DEGREE(merged_csr, v);
+    for (mer_t i = START_MERGED_INDICES(merged_csr, v); i < end; i++) {
       mer_t neighbor = merged_csr->merged[i];
       if (DISTANCE(merged_csr, neighbor) == UINT32_MAX) {
         DISTANCE(merged_csr, neighbor) = distance;
         if (DEGREE(merged_csr, neighbor) != 1) {
-          if (*dest == NULL || (*dest)->next_free_index >= CHUNK_SIZE) {
-            *dest = frontier_create_chunk(next, thread_id);
-          }
-          chunk_push_vertex(*dest, neighbor);
+          frontier_push_vertex(next_frontier, thread_id, neighbor);
         }
-      }
-    }
-  }
-}
-
-void top_down(MergedCSR *merged_csr, Frontier *current_frontier,
-              Frontier *next_frontier, int distance, int thread_id) {
-  Chunk *c = NULL;
-  Chunk *next_chunk = NULL;
-  Chunk **dest = &next_chunk;
-  // Run top-down step for all chunks belonging to the thread
-  while ((c = frontier_remove_chunk(current_frontier, thread_id)) != NULL) {
-    top_down_chunk(merged_csr, next_frontier, c, dest, distance, thread_id);
-  }
-  // Work stealing from other threads when finished processing chunks of this
-  // thread
-  bool work_to_do = true;
-  while (work_to_do) {
-    work_to_do = false;
-    for (int i = 0; i < MAX_THREADS; i++) {
-      // Skip threads that have only one chunk left
-      // This is a heuristic to avoid that threads that start with no chunks
-      // steal from threads that have one chunk This situation is common when
-      // there are more threads than chunks This is not a perfect solution, but
-      // it works okay for now
-      if (current_frontier->thread_chunks[i]->top_chunk > 1) {
-        work_to_do = 1;
-        if ((c = frontier_remove_chunk(current_frontier, i)) != NULL) {
-          top_down_chunk(merged_csr, next_frontier, c, dest, distance,
-                         thread_id);
-        }
-        i--;
       }
     }
   }
@@ -96,6 +59,7 @@ void finalize_distances(MergedCSR *merged_csr, int thread_id) {
 
 void *thread_main(void *arg) {
   int thread_id = *(int *)arg;
+  // printf("Thread %d: got work\n", thread_id);
 
   while (!exploration_done) {
     int old = distance;
@@ -106,11 +70,9 @@ void *thread_main(void *arg) {
       Frontier *temp = f2;
       f2 = f1;
       f1 = temp;
-      int chunks = frontier_get_total_chunks(f1);
-      if (chunks == 0)
+      if (frontier_get_total_chunks(f1) == 0)
         exploration_done = 1;
-      if (chunks > max_chunks)
-        max_chunks = chunks;
+
       // printf("%u \n", distance);
       // print_chunk_counts(f1);
       atomic_thread_fence(memory_order_seq_cst);
@@ -140,19 +102,17 @@ void bfs(uint32_t source) {
   // Convert source vertex to mergedCSR index
   source = merged_csr->row_ptr[source];
   DISTANCE(merged_csr, source) = 0;
-  Chunk *c = frontier_create_chunk(f1, 0);
-  chunk_push_vertex(c, source);
+  frontier_push_vertex(f1, 0, source);
   exploration_done = 0;
   active_threads = MAX_THREADS;
   distance = 1;
-  max_chunks = 0;
   atomic_thread_fence(memory_order_seq_cst);
   thread_pool_start_wait(&tp);
 }
 
 uint32_t *generate_sources(const mmio_csr_u32_f32_t *graph, int runs,
                            uint32_t num_vertices, uint32_t source) {
-  uint32_t *sources = (uint32_t *)malloc(runs * sizeof(uint32_t));
+  uint32_t *sources = malloc(runs * sizeof(uint32_t));
   if (source != UINT32_MAX) {
     for (int i = 0; i < runs; i++) {
       sources[i] = source;
@@ -205,6 +165,7 @@ int main(int argc, char **argv) {
     return (parse_result == 1) ? 0 : 1;
   }
 
+  // GraphCSR *graph = import_mtx(args.filename, METADATA_SIZE, VERT_MAX);
   mmio_csr_u32_f32_t *graph = mmio_read_csr_u32_f32(args.filename, false);
   if (graph == NULL) {
     printf("Failed to import graph from file [%s]\n", args.filename);
@@ -212,30 +173,22 @@ int main(int argc, char **argv) {
   }
 
   uint32_t *sources =
-    generate_sources(graph, args.runs, graph->nrows, args.source_id);
+      generate_sources(graph, args.runs, graph->nrows, args.source_id);
 
-  distances = (uint32_t *)malloc(graph->nrows * sizeof(uint32_t));
+  distances = malloc(graph->nrows * sizeof(uint32_t));
   memset(distances, UINT32_MAX, graph->nrows * sizeof(uint32_t));
   initialize_bfs(graph);
 
-  struct timespec start, end;
-  double elapsed;
+  static char param_buffer[256];
+
   for (int i = 0; i < args.runs; i++) {
-    clock_gettime(CLOCK_MONOTONIC, &start);
+    snprintf(param_buffer, sizeof(param_buffer), "dataset=%s,threads=%d,chunk_size=%d", args.filename, MAX_THREADS, CHUNK_SIZE);
+    BENCHMARK_START("BFS", i, param_buffer);
     bfs(sources[i]);
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    long seconds = end.tv_sec - start.tv_sec;
-    long nanoseconds = end.tv_nsec - start.tv_nsec;
-    elapsed = seconds + nanoseconds * 1e-9;
-
-    printf(
-        "run_id=%d,diameter=%d,threads=%d,chunk_size=%d,max_chunks=%d,%.4f\n",
-        i, distance, MAX_THREADS, CHUNK_SIZE, max_chunks, elapsed);
-
+    BENCHMARK_END();
     if (args.check) {
       check_bfs_correctness(graph, distances, sources[i]);
     }
-
     memset(distances, UINT32_MAX, merged_csr->num_vertices * sizeof(uint32_t));
   }
   // Terminate threads
@@ -245,8 +198,8 @@ int main(int argc, char **argv) {
   free(graph->row_ptr);
   free(graph->col_idx);
   free(graph);
-  frontier_destroy(f1);
-  frontier_destroy(f2);
+  destroy_frontier(f1);
+  destroy_frontier(f2);
   destroy_thread_pool(&tp);
   destroy_merged_csr(merged_csr);
   free(distances);
