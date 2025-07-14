@@ -4,5 +4,7 @@ obj/
 bin/
 .venv
 .cache/
+build/
 *.csv
 compile_commands.json
+.DS_Store

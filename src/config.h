@@ -6,7 +6,7 @@
 #define MAX_THREADS 4
 
 #define CHUNK_SIZE 64
-#define CHUNKS_PER_THREAD 128
+#define INITIAL_CHUNKS_PER_THREAD 128
 
 // Seed used for picking source vertices
 // Using same seed as in GAP benchmark for reproducible experiments
