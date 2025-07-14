@@ -15,6 +15,7 @@ typedef struct {
 #define DATA_SIZE 1
 #define DEGREE(mer, i) mer->merged[i]
 #define DISTANCE(mer, i) mer->merged[i + 1]
+#define ID(mer, i) mer->merged[i+2]
 
 /**
  * Converts the CSR graph into a modified merged CSR format with embedded
