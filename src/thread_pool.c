@@ -1,6 +1,6 @@
 // Define _GNU_SOURCE to enable non-standard GNU extensions,
 // specifically needed for pthread_setaffinity_np used in thread pinning.
-#define _GNU_SOURCE
+//#define _GNU_SOURCE
 #include "thread_pool.h"
 #include <pthread.h>
 #include <sched.h>

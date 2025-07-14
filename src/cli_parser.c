@@ -1,6 +1,6 @@
 // cli_parser.c
 
-#define _GNU_SOURCE // For getopt_long
+//#define _GNU_SOURCE // For getopt_long
 #include "cli_parser.h"
 #include <getopt.h>
 #include <stdio.h>
