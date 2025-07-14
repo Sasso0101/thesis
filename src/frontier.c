@@ -4,8 +4,13 @@
 #include <stdlib.h>
 
 void allocate_chunks(ThreadChunks *thread, int count) {
-  thread->chunks = (Chunk **)realloc(
-      thread->chunks, (thread->chunks_size + count) * sizeof(Chunk *));
+  if (thread->chunks_size == 0) {
+    thread->chunks =
+        (Chunk **)malloc(INITIAL_CHUNKS_PER_THREAD * sizeof(Chunk *));
+  } else {
+    thread->chunks = (Chunk **)realloc(
+        thread->chunks, (thread->chunks_size + count) * sizeof(Chunk *));
+  }
   for (int i = 0; i < count; i++) {
     thread->chunks[thread->top_chunk + i] = (Chunk *)malloc(sizeof(Chunk));
     thread->chunks[thread->top_chunk + i]->next_free_index = 0;
