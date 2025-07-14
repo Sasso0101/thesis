@@ -96,8 +96,11 @@ int main(const int argc, char **argv) {
              bfs->graph->row_ptr[random_source + 1]);
 
     // Initialize result vector
-    std::fill_n(result, bfs->graph->nrows,
-                std::numeric_limits<weight_type>::max());
+    for (vidType i = 0; i < bfs->graph->nrows; ++i) {
+      result[i] = std::numeric_limits<weight_type>::max();
+    }
+    // std::fill_n(result, bfs->graph->nrows,
+                // std::numeric_limits<weight_type>::max());
 
     t_start = omp_get_wtime();
     bfs->BFS(random_source, result);
