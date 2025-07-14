@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#define _GNU_SOURCE
+//#define _GNU_SOURCE
 #include "cli_parser.h"
 #include "benchmark.h"
 #include "config.h"
