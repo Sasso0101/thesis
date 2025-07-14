@@ -11,28 +11,27 @@
 typedef mer_t ver_t;
 
 typedef struct {
-    ver_t vertices[CHUNK_SIZE];
-    _Atomic int next_free_index;
+  ver_t vertices[CHUNK_SIZE];
+  _Atomic int next_free_index;
 } Chunk;
 
 typedef struct {
-    _Atomic(Chunk**) chunks;
-    _Atomic int chunks_size;
-    _Atomic int initialized_count;
-    _Atomic int top_chunk;
-    _Atomic int next_stealable_thread;
-    _Atomic(Chunk*) scratch_chunk;
+  _Atomic(Chunk **) chunks;
+  _Atomic int chunks_size;
+  _Atomic int top_chunk;
 } ThreadChunks;
 
 typedef struct {
-    ThreadChunks** thread_chunks;
-    _Atomic int* chunk_counts;
+  ThreadChunks **thread_chunks;
+  _Atomic int *thread_chunk_counts;
 } Frontier;
 
-Frontier* frontier_create();
-void destroy_frontier(Frontier* f);
-int frontier_get_total_chunks(Frontier* f);
-void frontier_push_vertex(Frontier* f, int thread_id, ver_t v);
-ver_t frontier_pop_vertex(Frontier* f, int thread_id);
+Frontier *frontier_create();
+void frontier_destroy(Frontier *f);
+Chunk *frontier_create_chunk(Frontier *f, int thread_id);
+Chunk *frontier_remove_chunk(Frontier *f, int thread_id);
+void chunk_push_vertex(Chunk *c, mer_t v);
+mer_t chunk_pop_vertex(Chunk *c);
+int frontier_get_total_chunks(Frontier *f);
 
 #endif // FRONTIER_H

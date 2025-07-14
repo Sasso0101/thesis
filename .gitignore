@@ -9,3 +9,4 @@ compile_commands.json
 results/
 __Makefile
 build/
+.DS_Store
