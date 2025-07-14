@@ -19,14 +19,20 @@ using frontier = std::vector<eidType>;
 class BFS_Impl {
 public:
   Graph *graph;
+  bool owns_graph;
   virtual void BFS(vidType source, weight_type *distances) = 0;
   virtual bool check_result(vidType source, weight_type *distances) = 0;
   bool check_distances(vidType source, const weight_type *distances) const;
   bool check_parents(vidType source, const weight_type *parents) const;
 
 protected:
-  BFS_Impl(Graph *graph) : graph(graph) {}
-  ~BFS_Impl() { delete graph; }
+  BFS_Impl(Graph *graph, bool owns_graph = true)
+      : graph(graph), owns_graph(owns_graph) {};
+  ~BFS_Impl() {
+    if (owns_graph) { // Check ownership before deleting
+      delete graph;
+    }
+  }
 };
 
 // BFS implementation using bitmaps to store frontiers and visited array
@@ -110,7 +116,7 @@ public:
 // Single-threaded BFS implementation using classic CSR
 class Reference : public BFS_Impl {
 public:
-  Reference(Graph *graph);
+  Reference(Graph *graph, bool owns_graph = true);
   ~Reference();
   void BFS(vidType source, weight_type *distances) override;
   bool check_result(vidType source, weight_type *distances) override;

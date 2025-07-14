@@ -3,7 +3,7 @@
 
 bool BFS_Impl::check_distances(vidType source,
                                const weight_type *distances) const {
-  Reference ref_input(graph);
+  Reference ref_input(graph, false);
   weight_type *ref_distances = new weight_type[graph->nrows];
   std::fill(ref_distances, ref_distances + graph->nrows, -1);
   ref_input.BFS(source, ref_distances);

@@ -1,6 +1,7 @@
 #include <implementation.hpp>
 
-Reference::Reference(Graph *graph) : BFS_Impl(graph) {}
+Reference::Reference(Graph *graph, bool owns_graph)
+      : BFS_Impl(graph, owns_graph) {};
 
 Reference::~Reference() {}
 
