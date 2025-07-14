@@ -1,10 +1,7 @@
-*.txt
-datasets/*
-obj/
-bin/
-.venv
+.DS_Store
+build/
+.vscode/
 .cache/
-*.csv
-compile_commands.json
-results/
-__Makefile
+scripts/
+datasets/
+.venv/
