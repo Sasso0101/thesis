@@ -93,15 +93,3 @@ int frontier_get_total_chunks(Frontier *f) {
   }
   return total;
 }
-
-Chunk *thread_remove_chunk(ThreadChunks *t, int *chunk_counter) {
-  mcs_lock_acquire(&t->lock, &t->node);
-  Chunk *c = NULL;
-  if (t->top_chunk > 0) {
-    t->top_chunk--;
-    c = t->chunks[t->top_chunk];
-    (*chunk_counter)--;
-  }
-  mcs_lock_release(&t->lock, &t->node);
-  return c;
-}
