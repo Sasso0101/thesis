@@ -1,5 +1,6 @@
 # Compiler and flags
 CC ?= gcc
+CXX ?= g++
 CFLAGS = -Wall -Wextra -O3 -std=c11 -MMD -MP
 
 # --- Experimental Evaluation params ---
@@ -48,7 +49,7 @@ all: $(TARGET)
 $(LIB_STATIC_FULL_PATH):
 	@echo "==> Configuring and building distributed_mmio library..."
 	@mkdir -p $(DIST_MMIO_PATH)/build
-	@cd $(DIST_MMIO_PATH)/build && cmake ..
+	@cd $(DIST_MMIO_PATH)/build && cmake -DCMAKE_C_COMPILER=$(CC) -DCMAKE_CXX_COMPILER=$(CXX) ..
 	@$(MAKE) -C $(DIST_MMIO_PATH)/build
 
 # Rule to link the final executable.
