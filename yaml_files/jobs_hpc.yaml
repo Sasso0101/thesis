@@ -9,7 +9,7 @@ variables:
   # datasets/large_diameter/DIMACS10/rgg_n_2_22_s0/rgg_n_2_22_s0.bmtx
   mtx: ["datasets/large_diameter/DIMACS10/europe_osm/europe_osm.bmtx"] # datasets/large_diameter/matrices_list.txt
   n: [30]
-  implname: ["mutex"]
+  implname: ["atomic"]
 
 jobs:
   - config: "hpc_{hpc_ncpus}cpus"
