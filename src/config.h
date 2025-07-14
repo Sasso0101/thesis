@@ -4,13 +4,13 @@
 #include <stdint.h>
 
 #ifndef MAX_THREADS
-#define MAX_THREADS 24
+#define MAX_THREADS 8
 #endif
 
 #ifndef CHUNK_SIZE
 #define CHUNK_SIZE 64
 #endif
-#define CHUNKS_PER_THREAD 128
+#define INITIAL_CHUNKS_PER_THREAD 128
 
 // Seed used for picking source vertices
 // Using same seed as in GAP benchmark for reproducible experiments

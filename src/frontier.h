@@ -30,7 +30,6 @@
 #include "config.h"
 #include <pthread.h>
 #include <stdbool.h>
-#include <stdint.h>
 
 typedef mer_t ver_t;
 
@@ -40,18 +39,15 @@ typedef struct {
 } Chunk;
 
 typedef struct {
-  Chunk **chunks;
-  int chunks_size;
-  int initialized_count;
-  int top_chunk;
-  int next_stealable_thread;
-  Chunk *scratch_chunk; // Scratch chunk used when adding or removing chunks
-  pthread_mutex_t lock;
+  Chunk **chunks;        // Array of pointers to chunks
+  int chunks_size;       // Current size of the chunks array
+  int top_chunk;         // Index of the next chunk to be allocated
+  pthread_mutex_t lock;  // Mutex for thread-safe access
 } ThreadChunks;
 
 typedef struct {
   ThreadChunks **thread_chunks;
-  int *chunk_counts;
+  int *thread_chunk_counts;
 } Frontier;
 
 /**
@@ -64,27 +60,35 @@ Frontier *frontier_create();
 /**
  * Destroys a Frontier structure and deallocates all associated resources.
  */
-void destroy_frontier(Frontier *f);
+void frontier_destroy(Frontier *f);
 
 /**
- * Calculates the total number of in-use chunks across all threads.
- *
- * @note This function is not thread-safe.
+ * Creates a new chunk for the specified thread in the Frontier. Allocates a new
+ * Chunk and returns a pointer to it.
+ */
+Chunk *frontier_create_chunk(Frontier *f, int thread_id);
+
+/**
+ * Removes a chunk from the Frontier for the specified thread. Returns a pointer
+ * to the removed Chunk, or NULL if no chunks are available.
+ */
+Chunk *frontier_remove_chunk(Frontier *f, int thread_id);
+
+/**
+ * Pushes a vertex onto the specified chunk. The chunk must not be full.
+ * Asserts if the chunk is NULL or full.
+ */
+void chunk_push_vertex(Chunk *c, mer_t v);
+
+/**
+ * Pops a vertex from the specified chunk. Returns VERT_MAX if the chunk is
+ * empty.
+ */
+mer_t chunk_pop_vertex(Chunk *c);
+
+/**
+ * Gets the total number of chunks currently allocated in the Frontier.
  */
 int frontier_get_total_chunks(Frontier *f);
-
-/*
- * Pushes a vertex in the ThreadChunks scratch chunk. If the chunk is full, it
- * pushes it to the chunks array.
- */
-void frontier_push_vertex(Frontier *f, int thread_id, ver_t v);
-
-/*
- * Pops a vertex from the ThreadChunks scratch chunk. If it is empty, it pops a
- * chunk from the chunks array. If the chunk array is empty, it attempts to
- * steal chunks from other threads. If there is no chunk to steal available, it
- * returns VERT_MAX.
- */
-ver_t frontier_pop_vertex(Frontier *f, int thread_id);
 
 #endif // FRONTIER_H

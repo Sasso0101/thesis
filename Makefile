@@ -78,3 +78,11 @@ clean:
 	@echo "==> Cleanup complete."
 
 .PHONY: all clean
+
+# --- Debugging ---
+# To build for debugging: make debug
+# This will clean the project and then rebuild with debugging symbols.
+.PHONY: debug
+debug:
+	$(MAKE) clean
+	$(MAKE) all CFLAGS="$(filter-out -O3,$(CFLAGS)) -g -O0"

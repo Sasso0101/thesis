@@ -8,3 +8,4 @@ bin/
 compile_commands.json
 results/
 __Makefile
+build/
