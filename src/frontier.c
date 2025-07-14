@@ -44,14 +44,12 @@ void frontier_destroy(Frontier *f) {
 
 Chunk *frontier_create_chunk(Frontier *f, int thread_id) {
   ThreadChunks *thread = f->thread_chunks[thread_id];
-  mcs_lock_acquire(&thread->lock, &thread->node);
   // Check if the thread's chunks array is full
   if (thread->top_chunk >= thread->chunks_size) {
     // Double the size of the chunks array
     allocate_chunks(thread, thread->chunks_size);
   }
   f->thread_chunk_counts[thread_id]++;
-  mcs_lock_release(&thread->lock, &thread->node);
   return thread->chunks[thread->top_chunk++];
 }
 
