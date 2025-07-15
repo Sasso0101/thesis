@@ -1,6 +1,6 @@
 // Define _GNU_SOURCE to enable non-standard GNU extensions,
 // specifically needed for pthread_setaffinity_np used in thread pinning.
-//#define _GNU_SOURCE
+#define _GNU_SOURCE
 #include "thread_pool.h"
 #include <pthread.h>
 #include <sched.h>
@@ -23,7 +23,7 @@ void init_thread_pool(thread_pool_t *tp, void *(*routine)(void *)) {
   tp->routine = routine;
 }
 
-int wait_for_work(thread_pool_t *tp, uint *run_id) {
+int wait_for_work(thread_pool_t *tp, uint32_t *run_id) {
   // Lock the mutex protecting shared state accessed by worker threads
   pthread_mutex_lock(&tp->mutex_children);
 
@@ -59,7 +59,7 @@ int wait_for_work(thread_pool_t *tp, uint *run_id) {
  */
 void *thread_main_wrapper(void *arg) {
   // Initialize the worker's local run ID. Starts at 1 to wait for the first cycle (global run id is initalized at 0).
-  uint run_id = 1;
+  uint32_t run_id = 1;
 
   // Main worker loop: continue as long as wait_for_work indicates readiness
   // wait_for_work handles the blocking and the termination check (via pthread_exit)

@@ -2,7 +2,7 @@
 #define FRONTIER_H
 
 #include "config.h"
-//#include <numa.h>
+#include <numa.h>
 #include <sched.h>
 #include <stdatomic.h>
 #include <stdbool.h>
