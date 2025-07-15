@@ -2,7 +2,7 @@
 #define FRONTIER_H
 
 #include "config.h"
-#include <numa.h>
+//#include <numa.h>
 #include <sched.h>
 #include <stdatomic.h>
 #include <stdbool.h>
@@ -34,8 +34,12 @@ typedef struct {
 // Fixed NUMA node detection
 static int current_numa_node() {
   int core = sched_getcpu();
-  int numa_node = numa_node_of_cpu(core);
-  return numa_node;
+ if (core < 16) return core / 8;
+    else if (core < 32) return (core - 16) / 8 + 2;
+    else if (core < 48) return (core - 32) / 8;
+    else return (core - 48) / 8 + 2;
+//  int numa_node = numa_node_of_cpu(core);
+ // return numa_node;
 }
 
 #define THRESHOLD (0xffff)
