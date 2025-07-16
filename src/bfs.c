@@ -1,19 +1,19 @@
 #define _GNU_SOURCE
-#include <stdlib.h>
-#include <string.h>
 #include "cli_parser.h"
 #include "config.h"
 #include "debug_utils.h"
 #include "frontier.h"
 #include "merged_csr.h"
+#include "mmio_c_wrapper.h"
 #include "mt19937-64.h"
 #include "thread_pool.h"
-#include "mmio_c_wrapper.h"
 #include <assert.h>
 #include <pthread.h>
 #include <stdatomic.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 MergedCSR *merged_csr;
@@ -24,6 +24,7 @@ atomic_int active_threads;
 
 volatile uint32_t exploration_done;
 volatile int distance;
+
 int max_chunks;
 
 thread_pool_t tp;
@@ -95,7 +96,6 @@ void finalize_distances(MergedCSR *merged_csr, int thread_id) {
 
 void *thread_main(void *arg) {
   int thread_id = *(int *)arg;
-  // printf("Thread %d: got work\n", thread_id);
 
   while (!exploration_done) {
     int old = distance;
@@ -145,6 +145,7 @@ void bfs(uint32_t source) {
   exploration_done = 0;
   active_threads = MAX_THREADS;
   distance = 1;
+  max_chunks = 0;
   atomic_thread_fence(memory_order_seq_cst);
   thread_pool_start_wait(&tp);
 }
@@ -204,7 +205,6 @@ int main(int argc, char **argv) {
     return (parse_result == 1) ? 0 : 1;
   }
 
-  // GraphCSR *graph = import_mtx(args.filename, METADATA_SIZE, VERT_MAX);
   mmio_csr_u32_f32_t *graph = mmio_read_csr_u32_f32(args.filename, false);
   if (graph == NULL) {
     printf("Failed to import graph from file [%s]\n", args.filename);

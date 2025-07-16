@@ -4,26 +4,23 @@
 #include "config.h"
 #include <stdatomic.h>
 #include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <stdlib.h>
 
 typedef mer_t ver_t;
 
 typedef struct {
   ver_t vertices[CHUNK_SIZE];
-  _Atomic int next_free_index;
+  int next_free_index;
 } Chunk;
 
 typedef struct {
-  _Atomic(Chunk **) chunks;
-  _Atomic int chunks_size;
-  _Atomic int top_chunk;
+  Chunk **chunks;        // Array of pointers to chunks
+  int chunks_size;       // Current size of the chunks array
+  atomic_int top_chunk;  // Atomic index of the next chunk to be allocated
 } ThreadChunks;
 
 typedef struct {
   ThreadChunks **thread_chunks;
-  _Atomic int *thread_chunk_counts;
+  atomic_int *thread_chunk_counts;
 } Frontier;
 
 Frontier *frontier_create();

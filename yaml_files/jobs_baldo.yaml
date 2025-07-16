@@ -8,7 +8,7 @@ variables:
     - "../datasets/large_diameter/DIMACS10/rgg_n_2_22_s0/rgg_n_2_22_s0.bmtx"
     - "../datasets/large_diameter/DIMACS10/europe_osm/europe_osm.bmtx"
   n: [10]
-  implname: ["atomic"]
+  implname: ["mutex"]
 
 jobs:
   - config: "baldo_{baldo_ncpus}cpus"

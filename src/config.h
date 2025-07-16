@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #ifndef MAX_THREADS
-#define MAX_THREADS 24
+#define MAX_THREADS 8
 #endif
 
 #ifndef CHUNK_SIZE
