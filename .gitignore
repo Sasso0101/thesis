@@ -2,6 +2,7 @@
 datasets/*
 obj/
 bin/
+.vscode
 .venv
 .cache/
 build/

@@ -5,7 +5,7 @@ CFLAGS = -Wall -Wextra -O3 -std=c11 -MMD -MP
 # --- Experimental Evaluation params ---
 CHUNK_SIZE ?= 64
 MAX_THREADS ?= 24
-PREPROCESSOR_VARS = -DCHUNK_SIZE=$(CHUNK_SIZE) -DMAX_THREADS=$(MAX_THREADS)
+PREPROCESSOR_VARS = -DCHUNK_SIZE=$(CHUNK_SIZE) -DMAX_THREADS=$(MAX_THREADS) -D_GNU_SOURCE
 
 # --- Library Configuration ---
 # Set the path to the root of the distributed_mmio library.
@@ -21,7 +21,7 @@ LDFLAGS = -L$(DIST_MMIO_PATH)/build
 # -ldistributed_mmio: The name of our C++ library (libdistributed_mmio.a).
 # -lstdc++:           This links the C++ standard library.
 # -pthread:           Used in bfs.
-LDLIBS = -ldistributed_mmio -lstdc++ -pthread
+LDLIBS = -ldistributed_mmio -lstdc++ -pthread -lpthread -lnuma
 
 # --- Project Directories ---
 SRC_DIR = src
@@ -63,7 +63,7 @@ $(TARGET): $(OBJS) $(LIB_STATIC_FULL_PATH)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@echo "==> Compiling: $<"
 	@mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) $(CPPFLAGS) $(PREPROCESSOR_VARS) -c $< -o $@
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDLIBS) $(PREPROCESSOR_VARS) -c $< -o $@
 
 # Include auto-generated dependency files if they exist
 -include $(DEPS)
