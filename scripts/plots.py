@@ -7,6 +7,7 @@ from pprint import pprint
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import itertools
 
 FONT_TITLE = 18
 FONT_AXES = 18
@@ -25,6 +26,8 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 ### Jobs Functions ###
 
+CHUNKSIZES = [16, 32, 64, 256, 1024, 4096]
+
 def filter_jobs(jobs: List[sbm.Job]) -> List[sbm.Job]:
   filtered_jobs = []
   for job in jobs:
@@ -32,12 +35,21 @@ def filter_jobs(jobs: List[sbm.Job]) -> List[sbm.Job]:
       filtered_jobs.append(job)
   return filtered_jobs
 
-def parse_stdout(stdout: str) -> float:
-  lines = stdout.split('\n')
-  times = []
-  for i in range(2, len(lines), 2):
-    times.append(float(lines[i].split(',')[-1]))
+def parse_stdout(job: sbm.Job) -> float:
+  stdout = job.get_stdout()
+  try:
+    lines = stdout.split('\n')
+    times = []
+    for line in lines:
+      if line.startswith('run_id=') or line.startswith('run='):
+        times.append(float(line.split(',')[-1]))
+  except Exception as e:
+    print(e)
+    print(f'STDOUT:\n{stdout}')
+    exit(1)
+
   # TODO remove times for which diameter too high/low
+  
   return geometric_mean(times) if len(times) > 0 else np.nan
 
 ### END Jobs Functions ###
@@ -52,20 +64,41 @@ jobs = filter_jobs(jobs)
 parsed_jobs = []
 for job in jobs:
   binary, args = job.parse_command_args()
-  avg_runtime = parse_stdout(job.get_stdout())
+  avg_runtime = parse_stdout(job)
 
-  parsed_jobs.append({
-    'dataset': Path(args['f']).stem,
-    'board': re.match(r'(\w+)_\d+cpus', job.config_name).group(1),
-    'num_cpus': int(re.match(r'\w+_(\d+)cpus', job.config_name).group(1)),
-    'chunksize': int(re.match(r'\w+chunksize_(\d+)', job.tag).group(1)),
-    'implementation': re.match(r'(\w+)chunksize_\d+', job.tag).group(1)[:-1],
-    'runtime': avg_runtime,
-  })
+  if job.tag.startswith('openmp'):
+    chunksizes = CHUNKSIZES
+    implementation = 'openmp'
+    dataset = Path(job.command.split(' ')[1]).stem
+    if dataset == 'europe_osm':
+      print(job.get_stdout())
+  else:
+    chunksizes = [int(re.match(r'\w+chunksize_(\d+)', job.tag).group(1))]
+    implementation = re.match(r'(\w+)chunksize_\d+', job.tag).group(1)[:-1]
+    dataset = Path(args['f']).stem
+
+  for chunksize in chunksizes:
+    parsed_jobs.append({
+      'dataset': dataset,
+      'board': re.match(r'(\w+)_\d+cpus', job.config_name).group(1),
+      'num_cpus': int(re.match(r'\w+_(\d+)cpus', job.config_name).group(1)),
+      'chunksize': chunksize,
+      'implementation': implementation,
+      'runtime': avg_runtime,
+    })
 
 df = pd.DataFrame(parsed_jobs)
 df.dropna(inplace=True)
+df.to_csv(OUT_DIR / 'data.csv')
+print(f'CSV data saved to {(OUT_DIR / "data.csv").resolve().absolute()}')
 print(df)
+
+# Assign a unique color to each implementation
+
+color_cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
+implementations = df['implementation'].unique()
+implementation_color_map = dict(zip(implementations, itertools.cycle(color_cycle)))
+# df['color'] = df['implementation'].map(color_map)
 
 ### END Jobs to Dataframe ###
 
@@ -82,6 +115,7 @@ def line_plot(ax, data, title):
       mean_grp["runtime"],
       marker="o",
       label=impl,
+      color=implementation_color_map[impl],
     )
   ax.set_xlabel("Number of CPUs")
   ax.set_ylabel("Runtime [s]")
