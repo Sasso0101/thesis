@@ -1,16 +1,16 @@
 variables:
-  baldo_ncpus: [1, 2, 4, 8]
+  baldo_ncpus: [1, 2, 4, 8, 16, 32]
 
   mtx:
     - "../datasets/large_diameter/GAP/GAP-road/GAP-road.bmtx"
     - "../datasets/large_diameter/DIMACS10/rgg_n_2_22_s0/rgg_n_2_22_s0.bmtx"
     - "../datasets/large_diameter/DIMACS10/europe_osm/europe_osm.bmtx"
-  n: [10]
-  implname: ["mutex"]
+  n: [15]
+  implname: ["openmp"]
 
 jobs:
   - config: "baldo_{baldo_ncpus}cpus"
     preprocess: "module load GCCcore/13.3.0"
-    command: "./targets/bfs_{implname} {mtx} {n} merged_csr"
+    command: "./build/BFS {mtx} {n} merged_csr"
     config_jobs:
       - tag: "{implname}"
