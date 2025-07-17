@@ -90,7 +90,7 @@ baldo:
       gpus: 2
       cpus_per_task: "16"
       env:
-        - "OMP_NUM_THREADS={baldo_ncpus}"
+        - "OMP_NUM_THREADS=16"
 
     - name: "baldo_32cpus"
       partition: "medium"
@@ -98,7 +98,7 @@ baldo:
       gpus: 3
       cpus_per_task: "32"
       env:
-        - "OMP_NUM_THREADS={baldo_ncpus}"
+        - "OMP_NUM_THREADS=32"
 
     # Requesting 64 CPUs would require 6 GPUs
 
