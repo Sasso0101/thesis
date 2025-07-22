@@ -4,6 +4,7 @@ variables:
   arriesgado_ncpus: [1, 2, 4]
   hpc_ncpus: [1, 2, 4, 8, 16, 24]
   baldo_ncpus: [1, 2, 4, 8]
+  brah_ncpus: [1, 2, 4, 8, 16, 32, 64]
   
 hca:
   scheduler: slurm
@@ -101,6 +102,14 @@ baldo:
         - "OMP_NUM_THREADS=32"
 
     # Requesting 64 CPUs would require 6 GPUs
+
+brah:
+  scheduler: local
+
+  configs:
+    - name: "brah_{brah_ncpus}cpus"
+      env:
+        - "OMP_NUM_THREADS={brah_ncpus}"
 
 
 local:

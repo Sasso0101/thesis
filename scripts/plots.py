@@ -142,7 +142,8 @@ def generate_line_plots(df: pd.DataFrame):
 
       fig.suptitle(f"Strong Scaling - Graph: {dataset_name} - Board: {board_name}", y=0.98)
       fig.tight_layout()
-      path = OUT_DIR / f"{board_name}_strong_scaling_{dataset_name}.png"
+      path = OUT_DIR / 'scaling' / f"{board_name}_strong_scaling_{dataset_name}.png"
+      path.parent.mkdir(exist_ok=True, parents=True)
       plt.savefig(path)
       plt.close()
       print(f"Plot saved to {path.resolve()}")
@@ -165,6 +166,7 @@ def plot_board_comparisons(df: pd.DataFrame, min_coverage_ratio=0.5):
     for board1, board2 in itertools.combinations(boards, 2):
       fig, ax = plt.subplots(figsize=(12, 6))
       bar_width = 0.8 / len(implementations)
+      miny, maxy = np.inf, -np.inf
 
       # Build merged data for all implementations
       cpu_data = {}
@@ -232,18 +234,32 @@ def plot_board_comparisons(df: pd.DataFrame, min_coverage_ratio=0.5):
           label_y = height + offset if height >= 0 else height - offset
           va = "bottom" if height >= 0 else "top"
           ax.text(bar.get_x() + bar.get_width() / 2, label_y, f"{speedup:.2f}x", ha="center", va=va, fontsize=11)
+          miny, maxy = min(miny, speedup), max(maxy, speedup)
 
       ax.axhline(0, color="black", linewidth=1)
       ax.set_xticks(x_base)
       ax.set_xticklabels([str(cpu) for cpu in valid_cpu_counts])
+      yticks = np.arange(-np.ceil(np.abs(miny)), np.ceil(maxy), 1)
+      ax.set_yticks(yticks)
+      yticklabels = []
+      yticklabels_start = yticks[0]-1
+      for i in range(len(yticks)):
+        tick = yticklabels_start+i
+        if tick >= -1:
+          tick += 2
+        yticklabels.append(f'${int(tick)}\\times$' if int(tick)!= 1 else 'Equal')
+      ax.set_yticklabels(yticklabels)
       ax.set_xlabel("Number of CPUs")
-      ax.set_ylabel(f"Performance Ratio") # \n(+ => {board2} faster, - => {board1} faster)")
+      ax.set_ylabel(f"Performance Ratio")
       ax.set_title(f"{board1} vs {board2} - Dataset={dataset} - ChunkSize={BEST_CHUNKSIZE}")
+      ax.text(-0.6, yticks[-1]-0.1, f'{board2} faster', fontsize=12, horizontalalignment='left', verticalalignment='top')
+      ax.text(-0.6, yticks[0]+0.1,  f'{board1} faster', fontsize=12, horizontalalignment='left', verticalalignment='bottom')
       ax.legend(title="Implementation")
       ax.grid(True, axis="y", linestyle="--", alpha=0.6)
       fig.tight_layout()
 
-      out_path = OUT_DIR / f"{dataset}_compare_{board1}_vs_{board2}_grouped.png"
+      out_path = OUT_DIR / 'comparison' / f"{dataset}_compare_{board1}_vs_{board2}_grouped.png"
+      out_path.parent.mkdir(exist_ok=True, parents=True)
       plt.savefig(out_path)
       plt.close()
       print(f"Grouped comparison plot saved to {out_path.resolve()}")
