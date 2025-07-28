@@ -10,10 +10,10 @@ import numpy as np
 import itertools
 
 ### === Constants and Plot Setup === ###
-FONT_TITLE = 18
-FONT_AXES = 18
-FONT_TICKS = 16
-FONT_LEGEND = 14
+FONT_TITLE = 19
+FONT_AXES = 20
+FONT_TICKS = 18
+FONT_LEGEND = 15
 CHUNKSIZES = [16, 32, 64, 256, 1024, 4096]
 OUT_DIR = Path("results")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -29,6 +29,11 @@ plt.rc("figure", titlesize=FONT_TITLE)
 
 VALID_IMPLEMENTATIONS = ['atomic', 'mutex', 'openmp']
 BEST_CHUNKSIZE = 64
+IMPLEMENTATION_NAMES_MAP = {
+  'atomic': 'Atomic',
+  'mutex': 'Mutex',
+  'openmp': 'OpenMP',
+}
 BOARD_NAMES_MAP = {
   'baldo': 'AMD_EPYC_7742',
   'pioneer': 'Milk-V Pioneer',
@@ -106,7 +111,7 @@ def line_plot(ax, data, title, color_map):
       mean_grp["num_cpus"],
       mean_grp["runtime"],
       marker="o",
-      label=impl,
+      label=IMPLEMENTATION_NAMES_MAP.get(impl, impl),
       color=color_map.get(impl),
     )
   ax.set_xlabel("Number of CPUs")
@@ -140,7 +145,7 @@ def generate_line_plots(df: pd.DataFrame):
       for ax in axes[len(chunks):]:
         ax.axis("off")
 
-      fig.suptitle(f"Strong Scaling - Graph: {dataset_name} - Board: {board_name}", y=0.98)
+      fig.suptitle(f"{board_name} - Strong Scaling (graph: {dataset_name})", y=0.98)
       fig.tight_layout()
       path = OUT_DIR / 'scaling' / f"{board_name}_strong_scaling_{dataset_name}.png"
       path.parent.mkdir(exist_ok=True, parents=True)
@@ -225,7 +230,7 @@ def plot_board_comparisons(df: pd.DataFrame, min_coverage_ratio=0.5):
           norm_diffs,
           width=bar_width,
           color=impl_colors[impl],
-          label=impl
+          label=IMPLEMENTATION_NAMES_MAP.get(impl, impl)
         )
 
         for bar, speedup in zip(bars, speedups):
@@ -233,7 +238,7 @@ def plot_board_comparisons(df: pd.DataFrame, min_coverage_ratio=0.5):
           offset = 0.04
           label_y = height + offset if height >= 0 else height - offset
           va = "bottom" if height >= 0 else "top"
-          ax.text(bar.get_x() + bar.get_width() / 2, label_y, f"{speedup:.2f}x", ha="center", va=va, fontsize=11)
+          ax.text(bar.get_x() + bar.get_width() / 2, label_y, f"{speedup:.2f}x", ha="center", va=va, fontsize=10)
           miny, maxy = min(miny, speedup), max(maxy, speedup)
 
       ax.axhline(0, color="black", linewidth=1)
@@ -251,9 +256,9 @@ def plot_board_comparisons(df: pd.DataFrame, min_coverage_ratio=0.5):
       ax.set_yticklabels(yticklabels)
       ax.set_xlabel("Number of CPUs")
       ax.set_ylabel(f"Performance Ratio")
-      ax.set_title(f"{board1} vs {board2} - Dataset={dataset} - ChunkSize={BEST_CHUNKSIZE}")
-      ax.text(-0.6, yticks[-1]-0.1, f'{board2} faster', fontsize=12, horizontalalignment='left', verticalalignment='top')
-      ax.text(-0.6, yticks[0]+0.1,  f'{board1} faster', fontsize=12, horizontalalignment='left', verticalalignment='bottom')
+      ax.set_title(f"{board1} vs {board2} (dataset={dataset}, chunk_size={BEST_CHUNKSIZE})")
+      ax.text(-0.6, yticks[-1]-0.1, f'{board2} Faster', fontsize=12, horizontalalignment='left', verticalalignment='top')
+      ax.text(-0.6, yticks[0]+0.1,  f'{board1} Faster', fontsize=12, horizontalalignment='left', verticalalignment='bottom')
       ax.legend(title="Implementation")
       ax.grid(True, axis="y", linestyle="--", alpha=0.6)
       fig.tight_layout()
