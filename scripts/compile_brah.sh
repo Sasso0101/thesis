@@ -19,7 +19,7 @@ for impl in "${impls[@]}"; do
         continue
     fi
 
-    for chunksize in 16 32 64 256 1024 4096; do
+    for chunksize in 4 8 16 32 64 256 1024 4096; do
         for ncpus in 1 2 4 8 16 32 64; do
             make clean
             CHUNK_SIZE=${chunksize} MAX_THREADS=${ncpus} CC=gcc CXX=g++ make -j8 bin/bfs
