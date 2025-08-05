@@ -6,7 +6,9 @@ bin/
 .cache/
 *.csv
 compile_commands.json
-results/
+results*/
 __Makefile
 build/
 .DS_Store
+bsc-hca/
+baldo/

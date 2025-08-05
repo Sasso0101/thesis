@@ -70,13 +70,14 @@ baldo:
     ntasks: 1
     time: "00:10:00" 
     gpus: 0
+    nodelist: ['gpu00']
 
   configs:
-    - name: "baldo_edu_{baldo_ncpus}cpus"
-      partition: "edu-medium"
-      cpus_per_task: "{baldo_ncpus}"
-      env:
-        - "OMP_NUM_THREADS={baldo_ncpus}"
+    # - name: "baldo_edu_{baldo_ncpus}cpus"
+    #   partition: "edu-medium"
+    #   cpus_per_task: "{baldo_ncpus}"
+    #   env:
+    #     - "OMP_NUM_THREADS={baldo_ncpus}"
 
     - name: "baldo_{baldo_ncpus}cpus"
       partition: "medium"
@@ -101,7 +102,13 @@ baldo:
       env:
         - "OMP_NUM_THREADS=32"
 
-    # Requesting 64 CPUs would require 6 GPUs
+    - name: "baldo_64cpus"
+      partition: "medium"
+      account: "flavio.vella"
+      gpus: 6
+      cpus_per_task: "64"
+      env:
+        - "OMP_NUM_THREADS=64"
 
 brah:
   scheduler: local
