@@ -85,7 +85,7 @@ def jobs_to_dataframe() -> pd.DataFrame:
 
   parsed_jobs = []
   for job in jobs:
-    binary, args = job.parse_command_args()
+    _, __, args = job.parse_command_args()
     avg_runtime, std_runtime, min_runtime, max_runtime = parse_stdout(job)
 
     if job.tag.startswith("openmp"):
@@ -100,8 +100,8 @@ def jobs_to_dataframe() -> pd.DataFrame:
     for chunksize in chunksizes:
       parsed_jobs.append({
         "dataset": dataset,
-        "board": re.match(r"(\w+)_\d+cpus", job.config_name).group(1),
-        "num_cpus": int(re.match(r"\w+_(\d+)cpus", job.config_name).group(1)),
+        "board": sbm.get_cluster_name(),
+        "num_cpus": int(re.match(r"\w*(\d+)_?cpus", job.config_name).group(1)),
         "chunksize": chunksize,
         "implementation": implementation,
         "runtime": avg_runtime,
@@ -273,7 +273,7 @@ def plot_board_comparisons(df: pd.DataFrame, min_coverage_ratio=0.5):
     df_dataset = df[df["dataset"] == dataset]
 
     for board1, board2 in [(BOARD_NAMES_MAP['brah'], BOARD_NAMES_MAP['pioneer'])]: # FIXME itertools.combinations(boards, 2):
-      fig, ax = plt.subplots(figsize=(12, 6))
+      fig, ax = plt.subplots(figsize=(12, 5))
       bar_width = 0.8 / len(implementations)
       miny, maxy = np.inf, -np.inf
 
@@ -338,6 +338,7 @@ def plot_board_comparisons(df: pd.DataFrame, min_coverage_ratio=0.5):
           color=impl_colors[impl],
           label=IMPLEMENTATION_NAMES_MAP.get(impl, impl)
         )
+        ax.axhline(0, color='r', linewidth=3)
 
         for bar, speedup in zip(bars, speedups):
           height = bar.get_height()
@@ -361,14 +362,14 @@ def plot_board_comparisons(df: pd.DataFrame, min_coverage_ratio=0.5):
         yticklabels.append(f'${int(abs(tick))}\\times$') # if int(tick)!= 1 else 'Equal')
       ax.set_yticklabels(yticklabels)
       ax.set_xlabel("Cores")
-      # ax.set_ylabel("Speedup")
+      ax.set_ylabel("Speedup")
       if SET_FIG_TITLE:
         ax.set_title(f"{board1} vs {board2} (Dataset: {dataset}, ChunkSize: {BEST_CHUNKSIZE})")
       miny = yticks[0]-1.0
       maxy = yticks[-1]+1.0
       ax.set_ylim(miny, maxy)
-      ax.text(-0.7, maxy-0.1,  f'{board2} Faster', fontsize=16, horizontalalignment='left', verticalalignment='top')
-      ax.text(-0.7, miny+0.05, f'{board1} Faster', fontsize=16, horizontalalignment='left', verticalalignment='bottom')
+      ax.text(-0.7, maxy-0.1,  f'{board2} Faster', fontsize=18, horizontalalignment='left', verticalalignment='top')
+      ax.text(-0.7, miny+0.05, f'{board1} Faster', fontsize=18, horizontalalignment='left', verticalalignment='bottom')
       ax.legend() # title="Implementation")
       ax.grid(True, axis="y", linestyle="--", alpha=0.6)
       fig.tight_layout()
@@ -398,9 +399,9 @@ def main():
   # Remap board names
   df['board'] = df['board'].map(BOARD_NAMES_MAP)
   
-  generate_line_plots(df)
-  generate_line_plots_for_board_pairs(df, [(BOARD_NAMES_MAP["baldo"], BOARD_NAMES_MAP["pioneer"])])
-  plot_board_comparisons(df)
+  # generate_line_plots(df)
+  # generate_line_plots_for_board_pairs(df, [(BOARD_NAMES_MAP["baldo"], BOARD_NAMES_MAP["pioneer"])])
+  # plot_board_comparisons(df)
 
 
 if __name__ == "__main__":

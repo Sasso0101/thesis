@@ -4,7 +4,7 @@ variables:
   arriesgado_ncpus: [1, 2, 4]
   hpc_ncpus: [1, 2, 4, 8, 16, 24]
   baldo_ncpus: [1, 2, 4, 8]
-  brah_ncpus: [1, 2, 4, 8, 16, 32, 64]
+  ncpus: [1, 2, 4, 8, 16, 32, 64]
   
 hca:
   scheduler: slurm
@@ -114,10 +114,25 @@ brah:
   scheduler: local
 
   configs:
-    - name: "brah_{brah_ncpus}cpus"
+    - name: "{ncpus}_cpus"
       env:
-        - "OMP_NUM_THREADS={brah_ncpus}"
+        - "OMP_NUM_THREADS={ncpus}"
 
+thea:
+  scheduler: slurm
+
+  default_conf:
+    nodes: 1
+    ntasks: 1
+    time: "00:10:00" 
+    gpus: 0
+
+  configs:
+    - name: "{ncpus}_cpus"
+      partition: "gg"
+      cpus_per_task: "{ncpus}"
+      env:
+        - "OMP_NUM_THREADS={ncpus}"
 
 local:
   scheduler: local
