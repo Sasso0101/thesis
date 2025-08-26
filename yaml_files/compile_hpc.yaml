@@ -1,0 +1,17 @@
+sequential: true
+
+variables:
+  ncpus: [1, 2, 4, 8, 16, 32]
+  chunksize: [32, 64, 256, 1024, 4096]
+
+preprocess: "module load cmake-3.15.4 gcc91"
+
+jobs:
+  - config: "hpc"
+    config_jobs:
+      - tag: "compile_pthreads"
+        command: "cd pthreads && mkdir -p targets / make clean && CHUNK_SIZE={chunksize} MAX_THREADS={ncpus} make -j24 bin/bfs && mv bin/bfs targets/bfs_chunksize{chunksize}_{ncpus}cpus && echo \"Built: targets/bfs_chunksize{chunksize}_{ncpus}cpus\" || echo \"Something went wrong\""
+      - tag: "compile_openmp"
+        command: "cd openmp && make clean && make -j24 bin/bfs && echo \"Built: bin/bfs\" || echo \"Something went wrong\""
+      - tag: "compile_gapbs"
+        command: "cd gapbs && make clean && make -j24 bfs && echo \"Built: bfs\" || echo \"Something went wrong\""

@@ -55,14 +55,14 @@ $(LIB_STATIC_FULL_PATH):
 $(TARGET): $(OBJS) $(LIB_STATIC_FULL_PATH)
 	@echo "==> Linking objects with the distributed_mmio library..."
 	@mkdir -p $(BIN_DIR)
-	$(CXX) -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS) $(PREPROCESSOR_VARS)
+	$(CXX) -fopenmp -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS) $(PREPROCESSOR_VARS)
 	@echo "==> Build successful: $(TARGET)"
 
-# Pattern rule to compile a .c file into a .o file.
+# Pattern rule to compile a .cpp file into a .o file.
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@echo "==> Compiling: $<"
-	@mkdir -p $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(PREPROCESSOR_VARS) -c $< -o $@
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(PREPROCESSOR_VARS) -fopenmp -c $< -o $@
 
 # Include auto-generated dependency files if they exist
 -include $(DEPS)

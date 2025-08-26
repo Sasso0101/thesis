@@ -10,7 +10,7 @@ PREPROCESSOR_VARS = -DCHUNK_SIZE=$(CHUNK_SIZE) -DMAX_THREADS=$(MAX_THREADS)
 
 # --- Library Configuration ---
 # Set the path to the root of the distributed_mmio library.
-DIST_MMIO_PATH = distributed_mmio
+DIST_MMIO_PATH = ../distributed_mmio
 LIB_STATIC_FULL_PATH = $(DIST_MMIO_PATH)/build/libdistributed_mmio.a
 
 # CPPFLAGS: Pre-processor flags, primarily for include paths (-I).

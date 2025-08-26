@@ -229,8 +229,8 @@ int main(int argc, char **argv) {
     elapsed = seconds + nanoseconds * 1e-9;
 
     printf(
-        "run_id=%d,diameter=%d,threads=%d,chunk_size=%d,max_chunks=%d,%.4f\n",
-        i, distance, MAX_THREADS, CHUNK_SIZE, max_chunks, elapsed);
+        "run_id=%d,diameter=%d,threads=%d,chunk_size=%d,max_chunks=%d,source=%d,%.4f\n",
+        i, distance, MAX_THREADS, CHUNK_SIZE, max_chunks, sources[i], elapsed);
 
     if (args.check) {
       check_bfs_correctness(graph, distances, sources[i]);

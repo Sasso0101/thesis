@@ -45,7 +45,7 @@ void MergedCSR_Parents::compute_parents(uint32_t *parents) const {
   }
 }
 
-#pragma omp declare reduction(vec_add : std::vector<eidType> : omp_out.insert( \
+#pragma omp declare reduction(vec_add : std::vector<edge> : omp_out.insert( \
         omp_out.end(), omp_in.begin(), omp_in.end()))
 
 void MergedCSR_Parents::top_down_step(const frontier &this_frontier,

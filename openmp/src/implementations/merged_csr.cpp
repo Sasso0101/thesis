@@ -1,4 +1,5 @@
 #include "graph.hpp"
+#include <limits>
 
 #define DEGREE(vertex) merged_csr[vertex]
 #define DISTANCE(vertex) merged_csr[vertex + 1]
@@ -39,7 +40,7 @@ void MergedCSR_Distances::compute_distances(edge *distances) const {
   for (vertex i = 0; i < graph->nrows; i++) {
     distances[i] = DISTANCE(merged_rowptr[i]);
     // Reset distance for next BFS
-    DISTANCE(merged_rowptr[i] + 1) = std::numeric_limits<uint32_t>::max();
+    DISTANCE(merged_rowptr[i]) = std::numeric_limits<uint32_t>::max();
   }
 }
 
