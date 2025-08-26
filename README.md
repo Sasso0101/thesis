@@ -1,35 +1,9 @@
-# Thesis
+# Optimizing Breadth-First Search on Modern Energy-Efficient Multicore CPUs
 
-Optimized BFS implementation in C using pthreads.
+## Requirements
+The project requires a C++17 compiler. The project has been tested with g++ 12.2.0 and OpenMP 4.5. The project also requires the [CMake](https://cmake.org/) build system. The project has been tested with CMake 3.31.6.
 
-## Prerequisites
-A Linux system with the following software installed:
-- git
-- gcc with support for C11
-- cmake
-- make
-
-## Installation
-
-Install the submodules required for the project:
-```bash
-git submodule update --init --recursive
-```
-
-Run make in the root directory to build the project:
-  ```bash
-  make
-  ```
-
-## Usage
-
-To run the BFS implementation, use the following command:
-```bash
-./bin/bfs -f <input file> -n <number of runs>
-```
-For more options, use the `-h` flag:
-```bash
-./bin/bfs -h
-```
-
-Note: the input file must be in the `.mtx` format. You can find many graphs in this format in the [SuiteSparse Matrix Collection](https://sparse.tamu.edu/).
+## Building
+## Running
+## Testing
+## Datasets
