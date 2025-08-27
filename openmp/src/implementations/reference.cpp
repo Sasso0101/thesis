@@ -1,4 +1,5 @@
 #include "mmio.h"
+// #include <cstdio>
 #include <graph.hpp>
 
 Reference::Reference(CSR_local<uint32_t, float> *graph) : BFS_Impl(graph) {}
@@ -9,7 +10,9 @@ void Reference::BFS(vertex source, uint32_t *distances) {
   std::vector<vertex> this_frontier = {};
   distances[source] = 0;
   this_frontier.push_back(source);
+  // int i = 0;
   while (!this_frontier.empty()) {
+    // std::printf("frontier: %d size: %zu\n", i++, this_frontier.size());
     std::vector<vertex> next_frontier;
     for (const auto &src : this_frontier) {
       for (uint64_t i = graph->row_ptr[src]; i < graph->row_ptr[src + 1]; i++) {

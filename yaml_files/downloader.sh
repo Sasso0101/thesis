@@ -23,12 +23,25 @@ for url in "${URLS[@]}"; do
   echo "Downloading $filename..."
   
   # Download the file quietly
-  wget -q "$url"
+  if [ ! -f "$filename" ]; then
+    wget -q "$url"
+  else
+    echo "$filename already exists, skipping download."
+  fi
   
   echo "Extracting $filename into datasets/..."
   # Extract the archive into the datasets directory
   tar -xzf "$filename" -C datasets/
-  
+
+  # Get the directory name from the filename (assuming .tar.gz extension)
+  DIR_NAME=$(basename "$filename" .tar.gz)
+
+  # Move the matrix file to the datasets directory
+  mv "datasets/$DIR_NAME/$DIR_NAME.mtx" "datasets/"
+
+  # Remove the extracted directory
+  rm -rf datasets/"$DIR_NAME"
+
   # Remove the downloaded archive to save space
   rm "$filename"
 done
