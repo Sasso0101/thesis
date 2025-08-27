@@ -12,6 +12,9 @@ DATASETS=(
   "datasets/asia_osm.mtx"
   "datasets/europe_osm.mtx"
   "datasets/rgg_n_2_22_s0.mtx"
+  "datasets/GAP-web.mtx"
+  "datasets/GAP-twitter.mtx"
+  "datasets/hollywood-2009.mtx"
 )
 
 # Directory for log files

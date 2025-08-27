@@ -15,6 +15,9 @@ URLS=(
 "https://suitesparse-collection-website.herokuapp.com/MM/Janna/Hook_1498.tar.gz"
 "https://suitesparse-collection-website.herokuapp.com/MM/Janna/Geo_1438.tar.gz"
 "https://suitesparse-collection-website.herokuapp.com/MM/Janna/PFlow_742.tar.gz"
+https://suitesparse-collection-website.herokuapp.com/MM/GAP/GAP-web.tar.gz
+https://suitesparse-collection-website.herokuapp.com/MM/GAP/GAP-twitter.tar.gz
+https://suitesparse-collection-website.herokuapp.com/MM/LAW/hollywood-2009.tar.gz
 )
 
 # Loop through the URLs and process each one

@@ -1,9 +1,78 @@
 # Optimizing Breadth-First Search on Modern Energy-Efficient Multicore CPUs
 
+This project contains multiple implementations of Breadth-First Search (BFS) to evaluate their performance on modern multicore CPUs. It includes implementations using Pthreads, OpenMP, and the GAP Benchmark Suite (GAPBS).
+
 ## Requirements
-The project requires a C++17 compiler. The project has been tested with g++ 12.2.0 and OpenMP 4.5. The project also requires the [CMake](https://cmake.org/) build system. The project has been tested with CMake 3.31.6.
+*   A C++17 compatible compiler (e.g., GCC, Clang).
+*   [CMake](https://cmake.org/) (version 3.10 or newer).
+*   [Make](https://www.gnu.org/software/make/).
+*   OpenMP for parallel execution.
+
+The project has been tested with g++ 13.0.0 and OpenMP 4.5.
+
+## Installation
+
+1.  Clone the repository:
+    ```sh
+    git clone <your-repository-url>
+    cd <repository-name>
+    ```
+
+2.  Initialize and update the submodules (distributed_mmio and  gapbs):
+    ```sh
+    git submodule update --init --recursive
+    ```
 
 ## Building
+
+A convenience script is provided to build all implementations.
+
+```sh
+./scripts/compile.sh
+```
+
+This will compile the pthreads, openmp, and gapbs executables and place them in their respective directories.
+
 ## Running
-## Testing
-## Datasets
+
+### Pthreads
+
+The Pthreads implementation can be run from the root directory.
+
+```sh
+./pthreads/bin/bfs -f <graph-file.mtx> -n <number-of-runs>
+```
+
+*   `-f`: Path to the input graph file in Matrix Market (`.mtx`) format.
+*   `-n`: Number of BFS runs to execute.
+*   `-s`: Specify a source vertex ID. If not provided, a random source is chosen.
+
+### OpenMP
+
+The OpenMP implementation can also be run from the root directory.
+
+```sh
+OMP_NUM_THREADS=<threads> ./openmp/bin/bfs <graph-file.mtx> <runs> <implementation>
+```
+
+*   `OMP_NUM_THREADS`: Set the number of OpenMP threads.
+*   `<graph-file.mtx>`: Path to the input graph file.
+*   `<runs>`: Number of BFS runs.
+*   `<implementation>`: The BFS algorithm to use. Options are `reference`, `merged_csr_distances`, `merged_csr_parents`.
+
+### GAP Benchmark Suite (GAPBS)
+
+The GAPBS implementation is located in the 
+
+gapbs
+
+ directory.
+
+```sh
+cd gapbs
+OMP_NUM_THREADS=<threads> ./bfs -f <graph-file> -n <iterations>
+```
+
+*   `OMP_NUM_THREADS`: Set the number of OpenMP threads.
+*   `-f`: Path to the input graph file. GAPBS supports various formats like `.el`, `.mtx`, `.gr`, and its own serialized `.sg` format.
+*   `-n`: Number of iterations to run.
