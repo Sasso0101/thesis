@@ -10,9 +10,13 @@ void Reference::BFS(vertex source, uint32_t *distances) {
   std::vector<vertex> this_frontier = {};
   distances[source] = 0;
   this_frontier.push_back(source);
-  // int i = 0;
+  #ifdef FRONTIER_DEBUG
+  int i = 0;
+  #endif
   while (!this_frontier.empty()) {
-    // std::printf("frontier: %d size: %zu\n", i++, this_frontier.size());
+    #ifdef FRONTIER_DEBUG
+    std::printf("frontier: %d size: %zu\n", i++, this_frontier.size());
+    #endif
     std::vector<vertex> next_frontier;
     for (const auto &src : this_frontier) {
       for (uint64_t i = graph->row_ptr[src]; i < graph->row_ptr[src + 1]; i++) {

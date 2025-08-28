@@ -9,6 +9,10 @@ ALPHA ?= 4
 BETA ?= 24
 PREPROCESSOR_VARS = -DALPHA=$(ALPHA) -DBETA=$(BETA)
 
+ifeq ($(FRONTIER_DEBUG), 1)
+PREPROCESSOR_VARS += -DFRONTIER_DEBUG
+endif
+
 # --- Library Configuration ---
 # Set the path to the root of the distributed_mmio library.
 DIST_MMIO_PATH = ../distributed_mmio

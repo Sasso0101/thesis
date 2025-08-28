@@ -9,3 +9,9 @@ large_diameter:
     - Janna/Hook_1498
     - Janna/Geo_1438
     - Janna/PFlow_742
+
+small_diameter:
+  suite_sparse_matrix_list:
+    - GAP/GAP-web
+    - LAW/hollywood-2009
+    - Gleich/wikipedia-20070206

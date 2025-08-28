@@ -1,0 +1,40 @@
+variables:
+  ncpus: [1, 2, 4, 8, 16, 32]
+  
+hca:
+  scheduler: slurm
+  default_conf:
+    nodes: 1
+    ntasks: 1
+    exclusive: true
+    time: "00:10:00" 
+  configs:
+    - name: "{ncpus}_cpus"
+      partition: "pioneer"
+      cpus_per_task: "{ncpus}"
+      exclude:
+        - pioneer-1
+        - pioneer-2
+      env:
+        - "OMP_NUM_THREADS={ncpus}"
+
+local:
+  scheduler: local
+  configs:
+    - name: "{ncpus}_cpus"
+      env:
+        - "OMP_NUM_THREADS={ncpus}"
+
+thea:
+  scheduler: slurm
+  default_conf:
+    nodes: 1
+    ntasks: 1
+    time: "00:10:00" 
+    gpus: 0
+  configs:
+    - name: "{ncpus}_cpus"
+      partition: "gg"
+      cpus_per_task: "{ncpus}"
+      env:
+        - "OMP_NUM_THREADS={ncpus}"

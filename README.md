@@ -23,6 +23,9 @@ The project has been tested with g++ 13.0.0 and OpenMP 4.5.
     git submodule update --init --recursive
     ```
 
+## SbatchMan and MtxMan
+This project is compatible with SbatchMan and MtxMan for job scheduling and matrix management. Examples for the SbatchMan configuration files are provided in the `scripts` directory. The matrix files used for the evaluation be found in the `scripts/matrices.yaml` directory.
+
 ## Building
 
 A convenience script is provided to build all implementations.
