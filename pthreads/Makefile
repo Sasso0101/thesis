@@ -8,6 +8,10 @@ CHUNK_SIZE ?= 64
 MAX_THREADS ?= 24
 PREPROCESSOR_VARS = -DCHUNK_SIZE=$(CHUNK_SIZE) -DMAX_THREADS=$(MAX_THREADS)
 
+ifeq ($(USE_PAPI), 1)
+PREPROCESSOR_VARS += -DUSE_PAPI -lpapi -I${PAPI_DIR}/include -L${PAPI_DIR}/lib
+endif
+
 # --- Library Configuration ---
 # Set the path to the root of the distributed_mmio library.
 DIST_MMIO_PATH = ../distributed_mmio

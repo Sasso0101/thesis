@@ -137,18 +137,19 @@ int main(const int argc, char **argv) {
 
   uint32_t *result = new uint32_t[bfs->graph->nrows];
 
-#ifdef USE_PAPI
-  int retval;
-
-  retval = PAPI_hl_region_begin("computation");
-  if (retval != PAPI_OK)
-    handle_error(retval);
-#endif
-
   for (uint32_t i = 0; i < sources.size(); i++) {
 #ifndef USE_PAPI
     t_start = omp_get_wtime();
 #endif
+    #ifdef USE_PAPI
+    if (i == 2) { // skip first two iterations
+      int retval;
+      
+      retval = PAPI_hl_region_begin("computation");
+      if ( retval != PAPI_OK )
+        handle_error(retval);
+    }
+    #endif
     bfs->BFS(sources[i], result);
 #ifndef USE_PAPI
     t_end = omp_get_wtime();
@@ -161,7 +162,7 @@ int main(const int argc, char **argv) {
 #endif
   }
 #ifdef USE_PAPI
-  retval = PAPI_hl_region_end("computation");
+  int retval = PAPI_hl_region_end("computation");
   if (retval != PAPI_OK)
     handle_error(retval);
 #endif
