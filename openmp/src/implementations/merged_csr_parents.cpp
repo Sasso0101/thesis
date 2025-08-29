@@ -5,7 +5,7 @@
 #define PARENT_ID(vertex) merged_csr[vertex + 1]
 #define DEGREE(vertex) merged_csr[vertex + 2]
 
-MergedCSR_Parents::MergedCSR_Parents(CSR_local<uint32_t, float> *graph) : BFS_Impl(graph) {
+MergedCSR_Parents::MergedCSR_Parents(const CSR_local<uint32_t, float>* graph) : BFS_Impl(graph) {
   create_merged_csr();
 }
 

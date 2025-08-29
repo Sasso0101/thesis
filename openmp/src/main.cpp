@@ -22,22 +22,6 @@ void handle_error(int retval) {
   "'reference' ('reference' by default) \n  <check>\t : 'true', false'. "      \
   "Checks correctness of the result ('false' by default)\n"
 
-BFS_Impl *initialize_BFS(std::string filename, std::string algo_str) {
-  CSR_local<uint32_t, float> *graph =
-      Distr_MMIO_CSR_local_read<uint32_t, float>(filename.c_str(), false);
-
-  if (algo_str == "merged_csr_parents") {
-    printf("Using Merged CSR with Parents implementation\n");
-    return new MergedCSR_Parents(graph);
-  } else if (algo_str == "merged_csr_distances") {
-    printf("Using Merged CSR with Distances implementation\n");
-    return new MergedCSR_Distances(graph);
-  } else {
-    printf("Using Reference implementation\n");
-    return new Reference(graph);
-  }
-}
-
 // A constant seed for the random number generator, equal to kRandSeed in GAPBS.
 const int kRandSeed = 27491095;
 
@@ -104,14 +88,27 @@ int main(const int argc, char **argv) {
   std::vector<uint32_t> sources = {};
   bool check = false;
   int runs = 1;
-  std::string algo_str = "reference";
 
+  std::string algo_str = "reference";
   if (argc > 3) {
     algo_str = std::string(argv[3]);
   }
 
   double t_start = omp_get_wtime();
-  BFS_Impl *bfs = initialize_BFS(std::string(argv[1]), algo_str);
+  CSR_local<uint32_t, float> *graph =
+      Distr_MMIO_CSR_local_read<uint32_t, float>(argv[1], false);
+
+  BFS_Impl *bfs;
+  if (algo_str == "merged_csr_parents") {
+    printf("Using Merged CSR with Parents implementation\n");
+    bfs = new MergedCSR_Parents(graph);
+  } else if (algo_str == "merged_csr_distances") {
+    printf("Using Merged CSR with Distances implementation\n");
+    bfs = new MergedCSR_Distances(graph);
+  } else {
+    printf("Using Reference implementation\n");
+    bfs = new Reference(graph);
+  }
   double t_end = omp_get_wtime();
 
   printf("Initialization: %f\n", t_end - t_start);
@@ -121,10 +118,7 @@ int main(const int argc, char **argv) {
   }
 
   if (argc > 4) {
-    std::string check_str = argv[4];
-    if (check_str == "true") {
-      check = true;
-    }
+    check = true;
   }
 
   if (argc > 5) {
@@ -143,32 +137,32 @@ int main(const int argc, char **argv) {
 
   uint32_t *result = new uint32_t[bfs->graph->nrows];
 
-  #ifdef USE_PAPI
+#ifdef USE_PAPI
   int retval;
-  
+
   retval = PAPI_hl_region_begin("computation");
-  if ( retval != PAPI_OK )
+  if (retval != PAPI_OK)
     handle_error(retval);
-  #endif
-  
+#endif
+
   for (uint32_t i = 0; i < sources.size(); i++) {
-    #ifndef USE_PAPI
+#ifndef USE_PAPI
     t_start = omp_get_wtime();
-    #endif
+#endif
     bfs->BFS(sources[i], result);
-    #ifndef USE_PAPI
+#ifndef USE_PAPI
     t_end = omp_get_wtime();
     printf("run_id=%d,threads=%d,source=%d,%.4f\n", i, omp_get_max_threads(),
-            sources[i], t_end - t_start);
+           sources[i], t_end - t_start);
     if (check) {
+      printf("Checking result for source %d\n", sources[i]);
       bfs->check_result(sources[i], result);
     }
-    #endif
+#endif
   }
-  #ifdef USE_PAPI
+#ifdef USE_PAPI
   retval = PAPI_hl_region_end("computation");
-  if ( retval != PAPI_OK )
+  if (retval != PAPI_OK)
     handle_error(retval);
-  #endif
-  delete[] result;
+#endif
 }

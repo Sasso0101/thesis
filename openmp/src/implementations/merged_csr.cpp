@@ -4,7 +4,7 @@
 #define DEGREE(vertex) merged_csr[vertex]
 #define DISTANCE(vertex) merged_csr[vertex + 1]
 
-MergedCSR_Distances::MergedCSR_Distances(CSR_local<uint32_t, float> *graph) : BFS_Impl(graph) {
+MergedCSR_Distances::MergedCSR_Distances(const CSR_local<uint32_t, float>* graph) : BFS_Impl(graph) {
   create_merged_csr();
 }
 

@@ -2,7 +2,7 @@
 #include <graph.hpp>
 #include <limits>
 
-Reference::Reference(CSR_local<uint32_t, float> *graph) : BFS_Impl(graph) {}
+Reference::Reference(const CSR_local<uint32_t, float> *graph) : BFS_Impl(graph) {}
 
 Reference::~Reference() {}
 

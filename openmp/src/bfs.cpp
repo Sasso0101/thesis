@@ -5,18 +5,18 @@ bool BFS_Impl::check_distances(vertex source,
                                const uint32_t *distances) const {
   Reference ref_input(graph);
   uint32_t *ref_distances = new uint32_t[graph->nrows];
-  std::fill(ref_distances, ref_distances + graph->nrows, -1);
   ref_input.BFS(source, ref_distances);
-  bool correct = true;
+  bool is_correct = true;
   for (int64_t i = 0; i < graph->nrows; i++) {
     if (distances[i] != ref_distances[i]) {
       std::cout << "Incorrect value for vertex " << i
-                << ", expected distance " + std::to_string(ref_distances[i]) +
-                       ", but got " + std::to_string(distances[i]) + "\n";
-      correct = false;
+                << ", expected distance " << std::to_string(ref_distances[i]) <<
+                       ", but got " << std::to_string(distances[i]) + "\n";
+      is_correct = false;
     }
   }
-  return correct;
+  delete[] ref_distances;
+  return is_correct;
 }
 
 bool BFS_Impl::check_parents(vertex source, const uint32_t *parents) const {

@@ -26,15 +26,14 @@ public:
 // Base class for BFS implementations
 class BFS_Impl {
 public:
-  CSR_local<uint32_t, float> *graph;
+  const CSR_local<uint32_t, float> *graph;
   virtual void BFS(vertex source, uint32_t *distances) = 0;
   virtual bool check_result(vertex source, uint32_t *distances) = 0;
   bool check_distances(vertex source, const uint32_t *distances) const;
   bool check_parents(vertex source, const uint32_t *parents) const;
 
 protected:
-  BFS_Impl(CSR_local<uint32_t, float> *graph) : graph(graph) {}
-  ~BFS_Impl() { delete graph; }
+  BFS_Impl(const CSR_local<uint32_t, float> *graph) : graph(graph) {}
 };
 
 // BFS implementation using the MergedCSR graph representation
@@ -49,7 +48,7 @@ private:
   void create_merged_csr();
 
 public:
-  MergedCSR_Distances(CSR_local<uint32_t, float> *graph);
+  MergedCSR_Distances(const CSR_local<uint32_t, float> *graph);
   ~MergedCSR_Distances();
   void BFS(vertex source, uint32_t *distances) override;
   bool check_result(vertex source, uint32_t *distances) override;
@@ -67,7 +66,7 @@ private:
   void create_merged_csr();
 
 public:
-  MergedCSR_Parents(CSR_local<uint32_t, float> *graph);
+  MergedCSR_Parents(const CSR_local<uint32_t, float> *graph);
   ~MergedCSR_Parents();
   void BFS(vertex source, uint32_t *distances) override;
   bool check_result(vertex source, uint32_t *distances) override;
@@ -76,7 +75,7 @@ public:
 // Single-threaded BFS implementation using classic CSR
 class Reference : public BFS_Impl {
 public:
-  Reference(CSR_local<uint32_t, float> *graph);
+  Reference(const CSR_local<uint32_t, float> *graph);
   ~Reference();
   void BFS(vertex source, uint32_t *distances) override;
   bool check_result(vertex source, uint32_t *distances) override;
