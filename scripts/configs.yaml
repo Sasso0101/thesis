@@ -25,6 +25,21 @@ local:
       env:
         - "OMP_NUM_THREADS={ncpus}"
 
+hpc:
+  scheduler: pbs
+  default_conf:
+    queue: short_cpuQ
+    mem: 100gb
+    cpus: 96
+    walltime: "00:05:00" 
+  configs:
+    - name: "96_cpus"
+    - name: "96_cpus_papi"
+      env:
+        - "PAPI_DIR=/home/salvatore.andaloro/papi/src/install"
+        - "PATH=/home/salvatore.andaloro/papi/src/install/bin:$PATH"
+        - "LD_LIBRARY_PATH=/home/salvatore.andaloro/papi/src/install/lib:$LD_LIBRARY_PATH"
+
 thea:
   scheduler: slurm
   default_conf:

@@ -14,4 +14,4 @@ jobs:
       - tag: "openmp_{ncpus}cpus"
         command: "OMP_NUM_THREADS={ncpus} openmp/targets/bfs {mtx} {n} merged_csr_distances"
       - tag: "gapbs_{ncpus}cpus"
-        command: "OMP_NUM_THREADS={ncpus} gapbs/bfs -f {mtx} -n {n}"
+        command: "OMP_NUM_THREADS={ncpus} gapbs/targets/bfs -f {mtx} -n {n}"

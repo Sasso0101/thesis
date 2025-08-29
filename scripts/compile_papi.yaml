@@ -1,0 +1,27 @@
+sequential: true
+
+variables:
+  ncpus: [1, 2, 4, 8, 16, 32]
+  ncpus_pthreads: [2, 4, 8, 16, 32]
+  chunksize: [64]
+  clean: ["mkdir -p targets && make clean"]
+
+jobs:
+  - config: "96_cpus_papi"
+    cluster_name: hpc
+    preprocess: "module load cmake-3.15.4 gcc91"
+    config_jobs:
+      - tag: "compile_gapbs_papi"
+        command: "cd gapbs && {clean} && make USE_PAPI=1 -j16 bfs"
+        postprocess: "mv bfs targets/bfs_papi"
+
+      # - tag: "compile_pthreads_papi"
+      #   command: "cd pthreads && {clean} && CHUNK_SIZE=1024 MAX_THREADS=1 make USE_PAPI=1 -j16 bfs"
+      #   postprocess: "mv bin/bfs targets/bfs_chunksize{chunksize}_{ncpus}_papi"
+      # - tag: "compile_pthreads_papi"
+      #   command: "cd pthreads && {clean} && CHUNK_SIZE={chunksize} MAX_THREADS={ncpus_pthreads} make USE_PAPI=1 -j16 bfs"
+      #   postprocess: "mv bin/bfs targets/bfs_chunksize{chunksize}_{ncpus}_papi"
+
+      # - tag: "compile_openmp_papi"
+      #   command: "cd openmp && {clean} && make USE_PAPI=1 -j16 bfs"
+      #   postprocess: "mv bin/bfs targets/bfs_papi"

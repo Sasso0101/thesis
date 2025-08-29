@@ -3,4 +3,4 @@
 	url = git@github.com:HicrestLaboratory/distributed_mmio.git
 [submodule "gapbs"]
 	path = gapbs
-	url = https://github.com/sbeamer/gapbs.git
+	url = https://github.com/sasso0101/gapbs.git
