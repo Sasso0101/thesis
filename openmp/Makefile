@@ -13,6 +13,10 @@ ifeq ($(FRONTIER_DEBUG), 1)
 PREPROCESSOR_VARS += -DFRONTIER_DEBUG
 endif
 
+ifeq ($(USE_PAPI), 1)
+PREPROCESSOR_VARS += -DUSE_PAPI -lpapi -I${PAPI_DIR}/include -L${PAPI_DIR}/lib
+endif
+
 # --- Library Configuration ---
 # Set the path to the root of the distributed_mmio library.
 DIST_MMIO_PATH = ../distributed_mmio

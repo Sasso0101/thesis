@@ -1,12 +1,14 @@
 #include "mmio.h"
-// #include <cstdio>
 #include <graph.hpp>
+#include <limits>
 
 Reference::Reference(CSR_local<uint32_t, float> *graph) : BFS_Impl(graph) {}
 
 Reference::~Reference() {}
 
 void Reference::BFS(vertex source, uint32_t *distances) {
+  std::fill_n(distances, graph->nrows,
+            std::numeric_limits<uint32_t>::max());
   std::vector<vertex> this_frontier = {};
   distances[source] = 0;
   this_frontier.push_back(source);

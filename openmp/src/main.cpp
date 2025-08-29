@@ -3,6 +3,16 @@
 #include <random>
 #include <sys/types.h>
 
+#ifdef USE_PAPI
+extern "C" {
+#include <papi.h>
+}
+void handle_error(int retval) {
+  printf("PAPI error %d: %s\n", retval, PAPI_strerror(retval));
+  exit(1);
+}
+#endif
+
 #define USAGE                                                                  \
   "Usage: %s <dataset> <runs> <implementation> <check> <source> \nRuns BFS "   \
   "implementations. \n\nMandatory arguments:\n  <dataset>\t path to dataset "  \
@@ -17,10 +27,13 @@ BFS_Impl *initialize_BFS(std::string filename, std::string algo_str) {
       Distr_MMIO_CSR_local_read<uint32_t, float>(filename.c_str(), false);
 
   if (algo_str == "merged_csr_parents") {
+    printf("Using Merged CSR with Parents implementation\n");
     return new MergedCSR_Parents(graph);
   } else if (algo_str == "merged_csr_distances") {
+    printf("Using Merged CSR with Distances implementation\n");
     return new MergedCSR_Distances(graph);
   } else {
+    printf("Using Reference implementation\n");
     return new Reference(graph);
   }
 }
@@ -130,18 +143,32 @@ int main(const int argc, char **argv) {
 
   uint32_t *result = new uint32_t[bfs->graph->nrows];
 
+  #ifdef USE_PAPI
+  int retval;
+  
+  retval = PAPI_hl_region_begin("computation");
+  if ( retval != PAPI_OK )
+    handle_error(retval);
+  #endif
+  
   for (uint32_t i = 0; i < sources.size(); i++) {
-    // Initialize result vector for each run
-    std::fill_n(result, bfs->graph->nrows,
-                std::numeric_limits<uint32_t>::max());
+    #ifndef USE_PAPI
     t_start = omp_get_wtime();
+    #endif
     bfs->BFS(sources[i], result);
+    #ifndef USE_PAPI
     t_end = omp_get_wtime();
     printf("run_id=%d,threads=%d,source=%d,%.4f\n", i, omp_get_max_threads(),
             sources[i], t_end - t_start);
     if (check) {
       bfs->check_result(sources[i], result);
     }
+    #endif
   }
+  #ifdef USE_PAPI
+  retval = PAPI_hl_region_end("computation");
+  if ( retval != PAPI_OK )
+    handle_error(retval);
+  #endif
   delete[] result;
 }
