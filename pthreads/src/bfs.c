@@ -16,11 +16,7 @@
 #include <string.h>
 #include <time.h>
 #ifdef USE_PAPI
-#include <papi.h>
-void handle_error(int retval) {
-  printf("PAPI error %d: %s\n", retval, PAPI_strerror(retval));
-  exit(1);
-}
+#include "papi.h"
 #endif
 
 MergedCSR *merged_csr;
@@ -228,15 +224,6 @@ int main(int argc, char **argv) {
   struct timespec start, end;
   double elapsed;
   for (int i = 0; i < args.runs; i++) {
-    #ifdef USE_PAPI
-    if (i == 2) { // skip first two iterations
-      int retval;
-      
-      retval = PAPI_hl_region_begin("computation");
-      if ( retval != PAPI_OK )
-        handle_error(retval);
-    }
-    #endif
     #ifndef USE_PAPI
     clock_gettime(CLOCK_MONOTONIC, &start);
     #endif
@@ -258,11 +245,6 @@ int main(int argc, char **argv) {
     memset(distances, UINT32_MAX, merged_csr->num_vertices * sizeof(uint32_t));
     #endif
   }
-  #ifdef USE_PAPI
-  int retval = PAPI_hl_region_end("computation");
-  if (retval != PAPI_OK)
-    handle_error(retval);
-  #endif
   // Terminate threads
   thread_pool_terminate(&tp);
 

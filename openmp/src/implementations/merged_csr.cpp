@@ -8,12 +8,15 @@ MergedCSR_Distances::MergedCSR_Distances(const CSR_local<uint32_t, float>* graph
   create_merged_csr();
 }
 
-MergedCSR_Distances::~MergedCSR_Distances() { delete[] merged_csr; }
+MergedCSR_Distances::~MergedCSR_Distances() { 
+  delete[] merged_csr; 
+  delete[] merged_rowptr;
+}
 
 // Create merged CSR from CSR
 void MergedCSR_Distances::create_merged_csr() {
   merged_csr = new edge[graph->nnz + 2 * graph->nrows];
-  merged_rowptr = new edge[graph->nrows];
+  merged_rowptr = new edge[graph->nrows + 1];
   edge merged_index = 0;
 
   for (vertex i = 0; i < graph->nrows; i++) {

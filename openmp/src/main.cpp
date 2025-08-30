@@ -62,11 +62,8 @@ private:
 
 // Generates a vector of random source vertices for a given graph.
 // It ensures that selected vertices have an out-degree greater than zero.
-std::vector<uint32_t>
-generate_random_sources(const CSR_local<uint32_t, float> *graph,
-                        size_t num_sources) {
-  std::vector<uint32_t> sources;
-  sources.reserve(num_sources);
+void generate_random_sources(const CSR_local<uint32_t, float> *graph,
+                        size_t num_sources, std::vector<uint32_t>& sources) {
   std::mt19937_64 rng(kRandSeed);
   UniDist<uint32_t, std::mt19937_64> udist(graph->nrows - 1, rng);
 
@@ -77,7 +74,6 @@ generate_random_sources(const CSR_local<uint32_t, float> *graph,
       sources.push_back(source);
     }
   }
-  return sources;
 }
 
 int main(const int argc, char **argv) {
@@ -124,7 +120,7 @@ int main(const int argc, char **argv) {
   if (argc > 5) {
     sources.insert(sources.end(), runs, std::stoi(argv[5]));
   } else {
-    sources = generate_random_sources(bfs->graph, runs);
+    generate_random_sources(bfs->graph, runs, sources);
   }
 
 #pragma omp parallel
@@ -143,11 +139,12 @@ int main(const int argc, char **argv) {
 #endif
     #ifdef USE_PAPI
     if (i == 2) { // skip first two iterations
-      int retval;
-      
-      retval = PAPI_hl_region_begin("computation");
-      if ( retval != PAPI_OK )
-        handle_error(retval);
+      #pragma omp parallel
+      {
+        int retval = PAPI_hl_region_begin("computation");
+        if ( retval != PAPI_OK )
+          handle_error(retval);
+      }
     }
     #endif
     bfs->BFS(sources[i], result);
@@ -162,8 +159,15 @@ int main(const int argc, char **argv) {
 #endif
   }
 #ifdef USE_PAPI
-  int retval = PAPI_hl_region_end("computation");
-  if (retval != PAPI_OK)
-    handle_error(retval);
+  #pragma omp parallel
+  {
+    int retval = PAPI_hl_region_end("computation");
+    if (retval != PAPI_OK)
+      handle_error(retval);
+  }
 #endif
+  delete[] result;
+  delete graph;
+  delete bfs;
+  return 0;
 }

@@ -31,6 +31,7 @@ public:
   virtual bool check_result(vertex source, uint32_t *distances) = 0;
   bool check_distances(vertex source, const uint32_t *distances) const;
   bool check_parents(vertex source, const uint32_t *parents) const;
+  virtual ~BFS_Impl() = default;
 
 protected:
   BFS_Impl(const CSR_local<uint32_t, float> *graph) : graph(graph) {}

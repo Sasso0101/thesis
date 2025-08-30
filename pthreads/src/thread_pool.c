@@ -7,6 +7,9 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef USE_PAPI
+#include <papi.h>
+#endif
 
 void init_thread_pool(thread_pool_t *tp, void *(*routine)(void *)) {
   // Initialize synchronization primitives for worker threads
@@ -36,9 +39,26 @@ int wait_for_work(thread_pool_t *tp, uint *run_id) {
   *run_id += 1;
   pthread_mutex_unlock(&tp->mutex_children);
   if (tp->stop_threads) {
+    #ifdef USE_PAPI
+    int retval = PAPI_hl_region_end("computation");
+    if (retval != PAPI_OK) {
+      printf("PAPI error %d: %s\n", retval, PAPI_strerror(retval));
+      exit(1);
+    }
+    #endif
     pthread_exit(0);
+  } else {
+    #ifdef USE_PAPI
+    if (*run_id == 3) { // skip first two iterations
+      int retval = PAPI_hl_region_begin("computation");
+      if ( retval != PAPI_OK ) {
+        printf("PAPI error %d: %s\n", retval, PAPI_strerror(retval));
+        exit(1);
+      }
+    }
+    #endif
+    return 0;
   }
-  return 0;
 }
 
 /**
