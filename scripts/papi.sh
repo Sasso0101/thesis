@@ -20,8 +20,6 @@ echo "Setting up environment..."
 export PAPI_DIR=/home/salvatore.andaloro/papi/src/install
 export PATH=/home/salvatore.andaloro/papi/src/install/bin:$PATH
 export LD_LIBRARY_PATH=/home/salvatore.andaloro/papi/src/install/lib:$LD_LIBRARY_PATH
-# This command might be specific to your cluster environment.
-module load cmake-3.15.4 gcc91
 
 # --- Compilation Phase ---
 echo "Starting compilation for PAPI..."
