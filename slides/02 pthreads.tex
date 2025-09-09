@@ -1,0 +1,134 @@
+\section{Pthreads}
+\begin{frame}{Pthreads implementation summary}
+% Provides a set of C functions to create and manage threads and gives more control over threads than OpenMP
+\begin{itemize}
+  \item<1-> Pthreads: low-level threading library to create and manage threads in C
+  \item<2-> Implementation components:
+  \begin{enumerate}
+    \item<2-> Custom data structure to handle the vertices in the frontier
+    \item<3-> Work-stealing mechanism for load balancing
+    \item<4-> Thread pool to manage thread creation and destruction
+    \item<5-> Custom barrier for thread synchronization
+  \end{enumerate}
+\end{itemize}
+\begin{figure}
+  \centering
+  \includegraphics[height=2cm, trim={0 1cm 0 1cm},clip]{images/pthreads.png}
+  \caption{Pthreads (unofficial) logo}
+\end{figure}
+\end{frame}
+\begin{frame}{Frontier implementation}
+\only<1>{
+\begin{figure}
+  \centering
+  \includegraphics[width=0.8\linewidth]{images/frontier_slides_0.png}
+\end{figure}
+}
+\only<2>{
+\begin{figure}
+  \centering
+  \includegraphics[width=0.8\linewidth]{images/frontier_slides_1.png}
+\end{figure}
+}
+\only<3>{
+\begin{figure}
+  \centering
+  \includegraphics[width=0.8\linewidth]{images/frontier_slides_2.png}
+\end{figure}
+}
+\only<4>{
+\begin{figure}
+  \centering
+  \includegraphics[width=0.8\linewidth]{images/frontier_slides_3.png}
+\end{figure}
+}
+\end{frame}
+\begin{frame}{Work-stealing mechanism}
+\only<1>{
+Thread 2 processes its vertices...
+\begin{figure}
+  \centering
+  \includegraphics[width=0.8\linewidth]{images/frontier_slides_3.png}
+\end{figure}
+}
+\only<2>{
+Thread 2 processes its vertices...
+\begin{figure}
+  \centering
+  \includegraphics[width=0.8\linewidth]{images/frontier_slides_4.png}
+\end{figure}
+}
+\only<3>{
+Thread 2 processes its vertices...
+\begin{figure}
+  \centering
+  \includegraphics[width=0.8\linewidth]{images/frontier_slides_5.png}
+\end{figure}
+}
+\only<4>{
+Thread 2 is out of work, will attempt a steal soon...
+\begin{figure}
+  \centering
+  \includegraphics[width=0.8\linewidth]{images/frontier_slides_6.png}
+\end{figure}
+}
+\only<5>{
+Thread 2 steals a chunk of work from Thread 1...
+\begin{figure}
+  \centering
+  \includegraphics[width=0.8\linewidth]{images/frontier_slides_7.png}
+\end{figure}
+}
+\only<6>{
+Thread 2 processes the stolen vertices and updates the global count.
+\begin{figure}
+  \centering
+  \includegraphics[width=0.8\linewidth]{images/frontier_slides_8.png}
+\end{figure}
+\begin{tikzpicture}[remember picture,overlay]
+  \node[
+    fill=yellow!30,         % background color
+    text=black,             % text color
+    rounded corners,
+    draw=orange!80!black,   % border color
+    thick,
+    inner sep=6pt,
+    anchor=south east,
+    font=\small,
+    align=center
+  ] at ([xshift=-2.5cm,yshift=1cm]current page.south east)
+  {Access to chunks is\\protected by mutexes.};
+\end{tikzpicture}
+}
+\end{frame}
+\begin{frame}{Thread pool}
+\begin{itemize}
+  \item When the program is run, a group of threads is spawned
+  \item At the beginning of each BFS run, the threads are awaken and the starting vertex is assigned to the \nth{0} thread
+\end{itemize}
+\begin{figure}
+  \centering
+  \includegraphics[width=0.5\linewidth]{images/Thread_pool.png}
+\end{figure}
+\end{frame}
+\begin{frame}{Sense-Reversal Centralized Barrier}
+  \begin{columns}[c] % split into two columns
+    % Left column: bullets
+    \begin{column}{0.6\textwidth}
+      \begin{itemize}
+        \item Central counter tracks arriving threads
+        \item Last thread resets counter + toggles global sense
+        \item Others wait until global = local sense
+        \item All released together, barrier reusable
+      \end{itemize}
+    \end{column}
+
+    % Right column: diagram
+    \begin{column}{0.4\textwidth}
+      \begin{figure}
+        \centering
+        \includegraphics[width=\linewidth]{images/barrier.png}
+      \end{figure}
+    \end{column}
+  \end{columns}
+\end{frame}
