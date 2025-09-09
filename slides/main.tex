@@ -27,6 +27,10 @@
 \definecolor{idxgray}{HTML}{9E9E9E} % Gray for indices
 
 \setbeamertemplate{title page}{
+    \advance\textwidth2cm
+    \hsize\textwidth
+    \columnwidth\textwidth
+    \centering
     \begin{minipage}[b][\paperheight]{\textwidth}
     \vfill
     \ifx\inserttitle\@empty\else\usebeamertemplate*{title}\fi
@@ -40,7 +44,7 @@
     \vspace*{10mm}
     \end{minipage}
 }
-\useoutertheme[right, width=0.15\linewidth]{sidebar}
+\useoutertheme[right, width=2cm]{sidebar}
 \setbeamercolor{sidebar}{bg=gray!10}
 \AtBeginSection[]{}
 \AtBeginSubsection[]{}
