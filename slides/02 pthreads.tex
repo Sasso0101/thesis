@@ -104,7 +104,11 @@ Thread 2 processes the stolen vertices and updates the global count.
 \begin{frame}{Thread pool}
 \begin{itemize}
   \item When the program is run, a group of threads is spawned
-  \item At the beginning of each BFS run, the threads are awaken and the starting vertex is assigned to the \nth{0} thread
+  \item At the beginning of each BFS run, the threads are awaken
+  \begin{enumerate}
+    \item Process own chunks
+    \item Steal work from other threads
+  \end{enumerate}
 \end{itemize}
 \begin{figure}
   \centering

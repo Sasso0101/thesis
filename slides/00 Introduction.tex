@@ -3,31 +3,20 @@
 \begin{frame}{Breadth-First Search}
     \begin{itemize}
         \item Breadth-First Search is a fundamental algorithm in graph analysis
-        \pause
-        \item Vertices are labeled based on the \alert{distance} from a given \textit{source} vertex
-        \pause
         \item Used in many algorithms: Dijkstra, Maximum Flow, MSP...
-        \pause
+        \item Vertices are labeled based on the \alert{distance} from a given \textit{source} vertex
     \end{itemize}
     \begin{figure}
+        \centering
         \begin{subfigure}[b]{0.32\textwidth}
             \centering
             \includegraphics[width=0.8\linewidth]{images/Collaboration network.png}
             \caption{Social network}
         \end{subfigure}
-        \pause
-        \hfill
         \begin{subfigure}[b]{0.32\textwidth}
             \centering
             \includegraphics[width=1.05\linewidth]{images/roadnet.png}
             \caption{Road network}
-        \end{subfigure}
-        \pause
-        \hfill
-        \begin{subfigure}[b]{0.32\textwidth}
-            \centering
-            \includegraphics[width=0.8\linewidth]{images/A-random-geometric-graph.png}
-            \caption{Synthetic graph}
         \end{subfigure}
     \end{figure}
 \end{frame}
@@ -84,7 +73,7 @@
     \item BFS has \bigO{V + E} time and space complexity (under RAM model)
     \item<2-> In practice, it is a \textbf{memory-bound algorithm} % no actual computation happening
     \begin{itemize}
-        \item Cache effects must be considered
+        \item Algorithm exhibits poor cache locality
     \end{itemize}
     \item<3-> CPUs exhibit growing amount of \textbf{parallelism}...
     \item<4-> ...and new architectures are coming to the market (ARM, RISC-V)
@@ -103,13 +92,8 @@
 
 \begin{frame}{Contents}
 \begin{itemize}
-    \item Two implementations with different \alert{parallel programming paradigms}
-    \begin{enumerate}
-        \item OpenMP implementation using the \textit{MergedCSR} data structure
-        % Data structure that rearranges graph data to reduce cache misses
-        \item Pthreads implementation using \textit{MergedCSR} + custom synchronization routines
-        % Reduces the overhead due to the OpenMP framework
-    \end{enumerate}
+    \item New \textit{MergedCSR} data structure
+    \item Two optimized parallel implementations (OpenMP and pthreads)
     \pause
     \item Evaluated against GAP Benchmark suite
     \item Speedups compared on three different architectures (AMD x86, RISC-V, ARM)
