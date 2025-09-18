@@ -1,40 +1,5 @@
 \section{OpenMP}
 
-\begin{frame}{From CSR to MergedCSR}
-\begin{itemize}
-  \item<1-> Graphs are usually stored in the Compressed Sparse Row format (CSR)
-  % each access to neighbors' adjacency list requires two memory accesses
-  \item<2-> MergedCSR core idea: access only \texttt{row\_ptr} array during BFS traversal
-  \begin{itemize}
-    \item<2-> \texttt{row\_ptr} array contains also algorithm-specific metadata (ex. distance)
-  \end{itemize}
-\end{itemize}
-\only<1>{
-\begin{figure}
-  \centering
-  \includegraphics[width=0.8\linewidth]{images/csr_slides_1.png}
-\end{figure}
-}
-\only<2>{
-\begin{figure}
-  \centering
-  \includegraphics[width=0.8\linewidth]{images/csr_slides_2.png}
-\end{figure}
-}
-\only<3>{
-\begin{figure}
-  \centering
-  \includegraphics[width=0.8\linewidth]{images/csr_slides_3.png}
-\end{figure}
-}
-\only<4>{
-\begin{figure}
-  \centering
-  \includegraphics[width=0.8\linewidth]{images/csr_slides_4.png}
-\end{figure}
-}
-\end{frame}
-
 \begin{frame}[fragile]{OpenMP implementation}
   \begin{columns}[c]
   \begin{column}{0.5\textwidth}
@@ -212,6 +177,6 @@
   \begin{itemize}
     \item Merging step is not parallel
     \pause
-    \item In graphs with large diameter, OpenMP enters the \texttt{parallel for} region more than 10k times for a single BFS runs
+    \item In graphs with large diameter, OpenMP enters the \texttt{parallel for} region more than 10k times for each BFS run on certain graphs
   \end{itemize}
 \end{frame}

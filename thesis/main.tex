@@ -1,0 +1,139 @@
+\documentclass[a4paper, 11pt, titlepage, twoside, openany]{book}
+\usepackage{plain}
+\usepackage{setspace}
+% Layout
+\usepackage[
+  paperheight=29.7cm,
+  paperwidth=21cm,
+  outer=1.5cm,
+  inner=2.5cm,
+  top=2cm,
+  bottom=2cm
+]{geometry}
+% Chapter
+\usepackage{titlesec}
+\singlespacing
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+% Letter
+\usepackage[utf8]{inputenc}
+% Language
+\usepackage[english]{babel}
+% PDF/A
+\usepackage[a-1b]{pdfx}
+% Image
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage{stackengine}
+\usepackage{etoolbox}
+% For professional tables
+\usepackage{tabularx}
+\usepackage{booktabs}
+\BeforeBeginEnvironment{wrapfigure}{\setlength{\intextsep}{0pt}}
+\usepackage{subcaption} % Required for subfigures and subcaptions
+% Hyperlink
+\usepackage{xurl}
+\usepackage[pdfa]{hyperref}
+\hypersetup{breaklinks=true}
+% Quotes
+\usepackage{fvextra}   % must come before csquotes
+\usepackage{csquotes}
+\MakeOuterQuote{"}
+% List
+\usepackage{enumitem}
+% Math
+\usepackage{amsmath}
+% Cref
+\usepackage[capitalize]{cleveref}
+% Use the algorithm2e package with options for line numbering, rules, and vertical lines
+\usepackage[linesnumbered,ruled,vlined,nofillcomment]{algorithm2e}
+% Colors
+\usepackage[svgnames]{xcolor}
+% Code listings
+\usepackage{minted}
+\usemintedstyle{friendly}
+\definecolor{codebg}{rgb}{0.97,0.97,0.97}
+\setminted{
+  fontsize=\small,
+  %baselinestretch=1.1,
+  %linenos,
+  breaklines,
+  frame=lines,
+  framesep=2mm,
+  bgcolor=codebg,
+}
+
+\crefname{algocfline}{line}{lines}
+\Crefname{algocfline}{Line}{Lines}
+\crefname{algocf}{algorithm}{algorithms}
+\Crefname{algocf}{Algorithm}{Algorithms}
+\crefrangelabelformat{Section}{#3#1#4--#5\crefstripprefix{#1}{#2}#6}
+
+\newcommand{\rowptr}{\texttt{row\_ptr}}
+\newcommand{\colidx}{\texttt{col\_idx}}
+\newcommand{\bigO}[1]{\ensuremath{\mathcal{O}(#1)}}
+\newcommand{\amd}{\texttt{Amd}}
+\newcommand{\pioneer}{\texttt{Pioneer}}
+\newcommand{\grace}{\texttt{Grace}}
+\newcommand{\chunksize}{\texttt{CHUNK\_SIZE}}
+\newcommand{\gapbs}{\texttt{gapbs}}
+\newcommand{\openmp}{\texttt{openmp}}
+\newcommand{\pthreads}{\texttt{pthreads}}
+
+% Document
+\begin{document}
+  % Cover
+  \pagenumbering{gobble}
+  \input{etc/cover}
+  \clearpage
+
+  % Acknowledgements
+  \input{etc/acknowledgements}
+  \clearpage
+  \pagestyle{plain}
+
+  % Table of Contents
+  \frontmatter
+  \pagenumbering{Roman}
+  \tableofcontents
+  \clearpage
+  \begingroup
+  \pagestyle{empty}
+  \cleardoublepage
+  \endgroup
+
+  % Start page numbering
+  \mainmatter
+
+  % Group to define space between chapters
+  \begingroup
+  % Override format of title chapter
+  \titleformat{\chapter} {\normalfont\Huge\bfseries}{\thechapter}{1em}{} \titlespacing*{\chapter}{0pt}{0.59in}{0.02in}
+  \titlespacing*{\section}{0pt}{0.20in}{0.02in} \titlespacing*{\subsection}{0pt}{0.10in}{0.02in}
+  \titlespacing*{\subsubsection}{0pt}{0.05in}{0.02in}
+
+  % Abstract
+  \input{etc/abstract.tex}
+
+  % Chapters
+  \input{chapters/00 Introduction}
+  \input{chapters/01 Background}
+  \input{chapters/02 Methodology}
+  \input{chapters/03 Results}
+
+  % Conclusions
+  \input{etc/conclusions.tex}
+
+  \endgroup
+
+  % Bibliography
+  \addcontentsline{toc}{chapter}{Bibliography}
+  % Alphabetical order of authors
+  \bibliographystyle{plain}
+  \bibliography{bibliography.bib}
+
+  % Attachments
+  %\titleformat{\chapter} {\normalfont\Huge\bfseries}{Appendix \thechapter}{1em}{}
+  %\appendix
+  %\input{attachments/attachment.tex}
+\end{document}

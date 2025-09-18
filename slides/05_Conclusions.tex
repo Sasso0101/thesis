@@ -1,0 +1,25 @@
+\section{Conclusions}
+\begin{frame}{Conclusions}
+\begin{itemize}
+  \item Designed two \textbf{multithreaded implementations} using an optimized CSR format and custom components tuned for today’s multicore processors
+  \item Compared them on different \textbf{architectures} (x86, RISC-V, ARM) and different \textbf{datasets}
+  \item Achieved $\approx 1.5x$ geomean speedup for OpenMP and $\approx 2x$ speedup for Pthreads compared to the GAP benchmark suite
+  \item Future work: explore other graph algorithms, optimize for more graph types
+  \item Some of the results presented were developed for the Fastcode Programming Challenge 2025 @ PPoPP'25 ACM conference \footfullcite{andaloro2025}
+\end{itemize}
+\vspace{4mm}
+\end{frame}
+
+\begin{frame}[plain]
+  \advance\textwidth2cm
+  \hsize\textwidth
+  \columnwidth\textwidth
+  \centering
+  \Huge \textbf{\alert{Thank You!}} \\[1em]
+  \Large Questions?
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=south east, xshift=0mm, yshift=-2mm] at (current page.south east) {
+        \includegraphics[width=1.5cm]{images/ferris.png}
+    };
+\end{tikzpicture}
+\end{frame}

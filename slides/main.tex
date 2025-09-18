@@ -1,10 +1,14 @@
-\documentclass[aspectratio=169]{beamer}
+\documentclass[aspectratio=169, numbering=fraction]{beamer}
 \usetheme{metropolis}
 \newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
 
 \usepackage{appendixnumberbeamer}
 \usepackage{booktabs}
 \usepackage{minted}
+\usepackage{cleveref}
+\usepackage[style=authortitle,backend=bibtex]{biblatex}
+\addbibresource{bibliography.bib}
+\usepackage[T1]{fontenc}
 \usepackage{xspace}
 \usepackage{graphicx}
 \usepackage{tabularx}
@@ -15,10 +19,11 @@
 \subcaptionsetup{labelformat=empty}
 
 \usepackage{tikz}
-\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, fit, shapes.multipart}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, fit, shapes.multipart, shapes.callouts}
 
 \usepackage{xcolor}
 
+\renewcommand*{\bibfont}{\normalfont\small}
 % Define custom colors to closely match the image
 \definecolor{myyellow}{HTML}{FFEB3B}
 \definecolor{mygreen}{HTML}{8BC34A}
@@ -44,28 +49,60 @@
     \vspace*{10mm}
     \end{minipage}
 }
-\useoutertheme[right, width=2cm]{sidebar}
+\setbeamertemplate{footline}{%
+    \leavevmode
+    \hfill
+    \makebox[0.7cm][r]{% fixed width box, aligned right
+        \parbox[c][0.7cm][c]{2cm}{% [c] = vertically center
+        \scriptsize\hfill \insertframenumber{} / \inserttotalframenumber \hspace{2mm}
+        }%
+    }%
+}
 \setbeamercolor{sidebar}{bg=gray!10}
+\useoutertheme[right, width=2cm]{sidebar}
+\makeatletter
+\addtobeamertemplate{sidebar \beamer@sidebarside}{}{%
+  \vfill
+  \includegraphics[width=2cm]{images/hicrest.png}
+  \vspace{0.2cm}
+}
+\makeatother
 \AtBeginSection[]{}
 \AtBeginSubsection[]{}
 
 \title{Optimizing Breadth-First Search on Modern Multicore CPUs} %Energy-Efficient
 % \date{\today}
 \date{}
-\author{Salvatore D. Andaloro}
+\author[Salvatore D. Andaloro]{Student: Salvatore D. Andaloro \\ Supervisors: Flavio Vella, Thomas Pasquali}
 \institute{Department of Information Engineering and Computer Science, University of Trento}
-\titlegraphic{\includegraphics[height=1cm]{images/logo.png}}
+\titlegraphic{\includegraphics[height=1cm]{images/logo.png} \includegraphics[height=1cm]{images/hicrest.png}
+}
 
 \newcommand{\bigO}[1]{\ensuremath{\mathcal{O}(#1)}}
+
+\newenvironment{specialframe}
+{
+    \begingroup
+    \advance\textwidth2cm % see beamerthemeGoettingen.sty for the number
+    \hsize\textwidth
+    \columnwidth\textwidth
+    \begin{frame}[plain]
+}
+{
+    \end{frame}
+    \endgroup
+}
 
 \begin{document}
 
 \maketitle
 
-\include{00 Introduction}
-\include{01 OpenMP}
-\include{02 pthreads}
-\include{03 Results}
-\include{04 Conclusions}
+\include{00_Introduction}
+\include{01_MergedCSR}
+\include{02_OpenMP}
+\include{03_pthreads}
+\include{04_Results}
+\include{05_Conclusions}
+\include{06_Backup}
 
 \end{document}

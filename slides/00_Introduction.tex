@@ -4,7 +4,6 @@
     \begin{itemize}
         \item Breadth-First Search is a fundamental algorithm in graph analysis
         \item Used in many algorithms: Dijkstra, Maximum Flow, MSP...
-        \item Vertices are labeled based on the \alert{distance} from a given \textit{source} vertex
     \end{itemize}
     \begin{figure}
         \centering
@@ -23,6 +22,9 @@
 
 \begin{frame}{Breadth-First Search Example}
 \centering
+Vertices are labeled based on the \alert{distance} from a given \textit{source} vertex
+\vspace*{5mm}
+\begin{center}
 \begin{tikzpicture}[
     every node/.style={circle, draw},
     node distance=1.5cm,
@@ -43,24 +45,25 @@
   % Animations
   \uncover<2->{
     \node[fill=myred] (A) {A};
-    \node[draw=myred, left=0.2cm of A, rectangle, align=center, font=\footnotesize] (boxA) {Distance = 0\\Parent = NULL};
+    \node[draw=myred, left=0.2cm of A, rectangle, align=center, font=\footnotesize] (boxA) {Distance = 0};
   }
 
   \uncover<3->{
     \node[fill=myblue] (B) [right=of A] {B};
     \node[fill=myyellow] (C) [below=of B] {C};
-    \node[draw=myblue, above=0.2cm of B, rectangle, align=center, font=\footnotesize] (boxB) {Distance = 1\\Parent = A};
-    \node[draw=myyellow, below=0.2cm of C, rectangle, align=center, font=\footnotesize] (boxC) {Distance = 1\\Parent = A};
+    \node[draw=myblue, above=0.2cm of B, rectangle, align=center, font=\footnotesize] (boxB) {Distance = 1};
+    \node[draw=myyellow, below=0.2cm of C, rectangle, align=center, font=\footnotesize] (boxC) {Distance = 1};
   }
 
   \uncover<4->{
     \node[fill=mygreen] (D) [right=of B] {D};
-    \node[draw=mygreen, below=0.2cm of D, rectangle, align=center, font=\footnotesize] (boxD) {Distance = 2\\Parent = B};
+    \node[draw=mygreen, below=0.2cm of D, rectangle, align=center, font=\footnotesize] (boxD) {Distance = 2};
   }
 \end{tikzpicture}
+\end{center}
 \begin{minipage}{\textwidth}
     \centering
-    \vspace{0.5cm}
+    \vspace{4mm}
     \only<1>{\textbf{Source vertex:} A}
     \only<2>{\textbf{Frontier:} A}
     \only<3>{\textbf{Frontier:} B, C}
@@ -70,10 +73,10 @@
 
 \begin{frame}{Modern Computer Architectures}
 \begin{itemize}
-    \item BFS has \bigO{V + E} time and space complexity (under RAM model)
+    \item<1-> BFS has \bigO{V + E} time and space complexity (under RAM model)
     \item<2-> In practice, it is a \textbf{memory-bound algorithm} % no actual computation happening
     \begin{itemize}
-        \item Algorithm exhibits poor cache locality
+        \item Graph algorithms exhibits poor cache locality
     \end{itemize}
     \item<3-> CPUs exhibit growing amount of \textbf{parallelism}...
     \item<4-> ...and new architectures are coming to the market (ARM, RISC-V)
@@ -81,8 +84,8 @@
 \uncover<3->{
 \begin{figure}
     \centering
-    \vspace{-3mm}
-    \includegraphics[width=0.6\linewidth]{images/cores.png}
+    \vspace{-1mm}
+    \includegraphics[width=0.53\linewidth]{images/cores.png}
     \vspace{-4mm}
     \caption{\scriptsize Evolution of core counts per socket for AMD and Intel processors}
     \label{fig:cores}
@@ -92,12 +95,13 @@
 
 \begin{frame}{Contents}
 \begin{itemize}
-    \item New \textit{MergedCSR} data structure
-    \item Two optimized parallel implementations (OpenMP and pthreads)
+    \item<1-> Propose an improved version of the \textit{MergedCSR} data structure \footfullcite{torok2020improving}
+    \item<2-> Designed two optimized parallel implementations (OpenMP and pthreads)
     \pause
-    \item Evaluated against GAP Benchmark suite
-    \item Speedups compared on three different architectures (AMD x86, RISC-V, ARM)
+    \item<3-> Evaluated against GAP Benchmark suite
+    \item<3-> Speedups compared on three different architectures (AMD x86, RISC-V, ARM)
 \end{itemize}
+\onslide<3->{
 \begin{figure}
     \centering
     \begin{subfigure}[c]{0.4\textwidth}
@@ -111,4 +115,5 @@
         \caption{Compared architectures}
     \end{subfigure}
 \end{figure}
+}
 \end{frame}

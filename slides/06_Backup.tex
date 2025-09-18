@@ -1,0 +1,66 @@
+\appendix
+\begin{specialframe}{Chunk size impact on performance}
+\begin{itemize}
+  \item Chunk size determines the number of vertices in a chunk
+  \item Chunk sizes of 32 and 64 are optimal for most datasets in multithreaded environments
+\end{itemize}
+\begin{figure}
+  \centering
+  \includegraphics[width=0.8\linewidth]{images/pthreads_chunksize.png}
+\end{figure}
+\end{specialframe}
+
+\begin{specialframe}{Frontier sizes for different datasets}
+\begin{figure}
+  \centering
+  \includegraphics[width=0.8\linewidth]{images/frontiers_plot.png}
+  \caption{The evolution of BFS frontier size for different graphs, colored by their graph class.}
+\end{figure}
+\end{specialframe}
+
+\begin{specialframe}{Datasets used}
+\scriptsize
+\begin{table}[h]
+    \centering
+    \begin{tabularx}{\linewidth}{ l l c c l }
+    \toprule
+    \multicolumn{1}{c}{\textbf{Name}} & \multicolumn{1}{c}{\textbf{Graph class}} & \multicolumn{1}{c}{\textbf{Vertices}} &
+    \multicolumn{1}{c}{\textbf{Edges}} & 
+    \multicolumn{1}{c}{\textbf{Notes}}\\
+    \midrule
+    GAP-Road      & Road Network & 23.9M & 57.7M & Road network of the USA. \\
+    europe\_osm   & Road Network & 50.9M & 108M  & Road network of Europe. \\
+    asia\_osm     & Road Network & 11.9M & 25.4M & Road network of Asia. \\
+    \addlinespace % Adds a little extra space for visual separation
+    Geo\_1438     & FEM          & 1.4M  & 60.2M & Geomechanical model of Earth's crust. \\
+    Hook\_1498    & FEM          & 1.4M  & 59.4M & 3D model of a steel hook. \\
+    PFlow\_742     & FEM          & 0.7M  & 37.1M & 3D pressure-temp in porous media. \\
+    \addlinespace % Adds a little extra space for visual separation
+    rgg\_n\_2\_22\_s0 & RGG          & 4.2M  & 60.7M & Random Geometric Graph. \\
+    \bottomrule
+    \end{tabularx}
+    \caption{Datasets used in the evaluation.}
+    \label{tab:datasets_booktabs}
+\end{table}
+\end{specialframe}
+
+\begin{specialframe}{Top-Down and Bottom-Up approaches}
+\begin{figure}
+\centering
+\includegraphics[width=0.8\linewidth]{images/hybrid bfs.png}
+\end{figure}
+\end{specialframe}
+
+\begin{specialframe}{Work-Stealing protocol}
+\begin{figure}
+\centering
+\includegraphics[width=0.7\linewidth]{images/workstealing.png}
+\end{figure}
+\end{specialframe}
+
+\begin{specialframe}{Thread pool implementation}
+\begin{figure}
+\centering
+\includegraphics[width=0.7\linewidth]{images/threads.png}
+\end{figure}
+\end{specialframe}
