@@ -1,6 +1,15 @@
 # Optimizing Breadth-First Search on Modern Energy-Efficient Multicore CPUs
 
-This project contains multiple implementations of Breadth-First Search (BFS) to evaluate their performance on modern multicore CPUs. It includes implementations using Pthreads, OpenMP, and the GAP Benchmark Suite (GAPBS).
+This project contains two implementations of Breadth-First Search (BFS): an OpenMP implementation and a pthreads implementation. Both implementations focus on optimizing BFS performance on modern energy-efficient multicore CPUs by addressing memory access patterns and synchronization overheads.
+
+## Overview
+Breadth-First Search (BFS) is a fundamental algorithm for graph analysis, but its performance on modern multicore CPUs is generally limited by irregular memory access.
+
+The OpenMP implementation uses an optimized data structure to store graph data, called MergedCSR. By co-locating vertex metadata with its adjacency list, this format improves spatial locality and reduces cache misses.The pthreads implementation uses the MergedCSR structure and some custom components to further improve performance. Namely, it includes a custom implementation of a thread pool, a chunk-based frontier with dynamic work-stealing for load balancing, and a lightweight, custom barrier for scalable synchronization.
+
+Both implementations were evaluated against the GAP Benchmark Suite (included as a submodule) on a diverse set of graphs across x86, RISC-V, and ARM platforms. The results demonstrate that the MergedCSR data structure significantly improves memory performance, enabling a geomean speedup of up to 1.5x over the baseline on large-diameter graphs. Furthermore, the explicit pthreads implementation exhibits superior scalability due to its custom synchronization and outperforms the GAP benchmark with a geomean of 2.28x on road networks and 1.87x on random geometric graphs.
+
+[Thesis](thesis.pdf) | [Slides](slides.pdf)
 
 ## Requirements
 *   A C++17 compatible compiler (e.g., GCC, Clang).
@@ -24,17 +33,7 @@ The project has been tested with g++ 13.0.0 and OpenMP 4.5.
     ```
 
 ## SbatchMan and MtxMan
-This project is compatible with SbatchMan and MtxMan for job scheduling and matrix management. Examples for the SbatchMan configuration files are provided in the `scripts` directory. The matrix files used for the evaluation be found in the `scripts/matrices.yaml` directory.
-
-## Building
-
-A convenience script is provided to build all implementations.
-
-```sh
-./scripts/compile.sh
-```
-
-This will compile the pthreads, openmp, and gapbs executables and place them in their respective directories.
+This project is compatible with SbatchMan and MtxMan for job scheduling and matrix management. The SbatchMan configuration files are provided in the `scripts` directory. The matrix files used for the evaluation be found in the `scripts/matrices.yaml` directory.
 
 ## Running
 
@@ -65,11 +64,7 @@ OMP_NUM_THREADS=<threads> ./openmp/bin/bfs <graph-file.mtx> <runs> <implementati
 
 ### GAP Benchmark Suite (GAPBS)
 
-The GAPBS implementation is located in the 
-
-gapbs
-
- directory.
+The GAPBS implementation is located in the gapbs directory.
 
 ```sh
 cd gapbs
