@@ -1,7 +1,7 @@
 # Compiler and flags
 CC ?= gcc
 CXX ?= g++
-CFLAGS = -Wall -Wextra -O3 -std=c11 -MMD -MP
+CFLAGS ?= -Wall -Wextra -O3 -std=c11 -MMD -MP
 
 # --- Experimental Evaluation params ---
 CHUNK_SIZE ?= 64
