@@ -53,7 +53,7 @@ all: $(TARGET)
 $(LIB_STATIC_FULL_PATH):
 	@echo "==> Configuring and building distributed_mmio library..."
 	@mkdir -p $(DIST_MMIO_PATH)/build
-	@cd $(DIST_MMIO_PATH)/build && cmake -DCMAKE_C_COMPILER=$(CC) -DCMAKE_CXX_COMPILER=$(CXX) ..
+	@cd $(DIST_MMIO_PATH)/build && cmake -DCMAKE_C_COMPILER=$(CC) -DCMAKE_CXX_COMPILER=$(CXX) -DCMAKE_CXX_FLAGS="$(CFLAGS)" ..
 	@$(MAKE) -C $(DIST_MMIO_PATH)/build
 
 # Rule to link the final executable.
@@ -61,7 +61,7 @@ $(LIB_STATIC_FULL_PATH):
 $(TARGET): $(OBJS) $(LIB_STATIC_FULL_PATH)
 	@echo "==> Linking objects with the distributed_mmio library..."
 	@mkdir -p $(BIN_DIR)
-	$(CXX) -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS) $(PREPROCESSOR_VARS)
+	$(CXX) -o $@ $(OBJS) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(LDLIBS) $(PREPROCESSOR_VARS)
 	@echo "==> Build successful: $(TARGET)"
 
 # Pattern rule to compile a .c file into a .o file.
