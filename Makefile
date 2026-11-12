@@ -56,7 +56,7 @@ $(LIB_STATIC_FULL_PATH):
 $(TARGET): $(OBJS) $(LIB_STATIC_FULL_PATH)
 	@echo "==> Linking objects with the distributed_mmio library..."
 	@mkdir -p $(BIN_DIR)
-	$(CXX) -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS) $(PREPROCESSOR_VARS)
+	$(CXX) -o $@ $(OBJS) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(LDLIBS) $(PREPROCESSOR_VARS)
 	@echo "==> Build successful: $(TARGET)"
 
 # Pattern rule to compile a .c file into a .o file.
